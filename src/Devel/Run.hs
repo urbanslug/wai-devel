@@ -37,7 +37,7 @@ runBackend = do
              showError err
 
              -- Run the updated session.
-             ran <- runStmt session "Application" "develMain"
+             ran <- runStmt session "Application" "main"
 
              let loop = do
                    runAction <- runWait ran
