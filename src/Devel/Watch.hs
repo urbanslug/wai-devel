@@ -10,9 +10,9 @@ notifyOnChange :: IO ()
 notifyOnChange = do
   threadId <- forkIO runBackend
   let act = \event -> case event of
-                        (Added    _path _) -> (killThread threadId) >> runBackend >> putStrLn ("Reloading, new file.")
-                        (Modified _path _) -> runBackend >> putStrLn ("Reloading, modification.")
-                        (Removed  _path _) -> runBackend >> putStrLn ("Removed.") 
+                        (Added    _path _) -> (killThread threadId) >> runBackend
+                        (Modified _path _) -> (killThread threadId) >> runBackend
+                        (Removed  _path _) -> (killThread threadId) >> runBackend
   mgr <- startManager
   watchDir mgr "." (const True) act
   forever $ threadDelay maxBound

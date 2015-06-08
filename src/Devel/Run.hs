@@ -18,6 +18,11 @@ import Distribution.PackageDescription
 import Distribution.PackageDescription.Parse
 import Distribution.PackageDescription.Configuration
 
+-- For cabal configure
+import Distribution.Simple.Setup
+import Distribution.Simple.Configure
+import System.Process (runCommand)
+
 runBackend :: IO ()
 runBackend = do
              -- Initializing the session.
@@ -61,11 +66,16 @@ extractExtensions = do
                                  (x:_) -> return x
               cabalFile <- readFile cabalFilePath
               let unsafePackageDescription = parsePackageDescription cabalFile
+                  -- unsafeHookedBuildInfo = parseHookedBuildInfo cabalFile
                   genericPackageDescription = case unsafePackageDescription of
                                             ParseOk _ a -> a
                                             _           -> error "failed package description."
+                  -- hookedBuildInfo = case unsafeHookedBuildInfo of
+                  --                      ParseOk _ a -> a
+                  --                        _           -> error "failed hooked build info"
                   packDescription = flattenPackageDescription genericPackageDescription
                   sanitize = last . words
+              -- configure (genericPackageDescription, hookedBuildInfo) emptyConfigFlags
               allExt <- return $ usedExtensions $ head $ allBuildInfo packDescription
               listOfExtensions <- return $ map sanitize $ map show allExt
               return $ map ((++) "-X") listOfExtensions
