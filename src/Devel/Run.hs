@@ -18,15 +18,23 @@ import Distribution.PackageDescription
 import Distribution.PackageDescription.Parse
 import Distribution.PackageDescription.Configuration
 
--- For cabal configure
-import Distribution.Simple.Setup
-import Distribution.Simple.Configure
-import System.Process (runCommand)
+import System.Process (rawSystem)
+import System.Directory (doesFileExist)
+import System.Exit (ExitCode(ExitSuccess))
+
 
 runBackend :: IO ()
 runBackend = do
-             -- Initializing the session.
+             
              dir <- getCurrentDirectory
+             
+             -- Check if configured. If not, configure.
+             isConf <- doesFileExist $ dir ++ "/dist/cabal_macros.h"
+             case isConf of
+               True  -> return ExitSuccess 
+               False -> rawSystem "cabal" configFlags
+
+             -- Initializing the session.
              session <- initSession defaultSessionInitParams defaultSessionConfig {configLocalWorkingDir = Just dir}
              extensionList <- extractExtensions
 
@@ -43,6 +51,7 @@ runBackend = do
 
              -- Run the updated session.
              ran <- runStmt session "Application" "main"
+             putStrLn "Starting devel server http://localhost:3000"
 
              let loop = do
                    runAction <- runWait ran
@@ -79,3 +88,16 @@ extractExtensions = do
               allExt <- return $ usedExtensions $ head $ allBuildInfo packDescription
               listOfExtensions <- return $ map sanitize $ map show allExt
               return $ map ((++) "-X") listOfExtensions
+
+
+configFlags :: [String]
+configFlags = [ "configure"
+              , "-flibrary-only"
+              , "--disable-tests"
+              , "--disable-benchmarks"
+              , "-fdevel"
+              , "--disable-library-profiling"
+              , "--with-ld=yesod-ld-wrapper"
+              , "--with-ghc=yesod-ghc-wrapper"
+              , "--with-ar=yesod-ar-wrapper"
+              , "--with-hc-pkg=ghc-pkg"]
