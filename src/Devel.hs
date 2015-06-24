@@ -1,10 +1,10 @@
 module Main where
 
-import Devel.Watch (notifyOnChange)
+import Devel.Watch (compile)
 import Devel.ReverseProxy (runServer)
 import Control.Concurrent (forkIO)
 
 main :: IO ()
 main = do 
-  _ <- forkIO notifyOnChange
+  _ <- forkIO compile
   runServer

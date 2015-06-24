@@ -5,11 +5,12 @@ module Devel.Run (runBackend) where
 import IdeSession
 import Data.Monoid ((<>))
 
-import "Glob" System.FilePath.Glob (glob)
+-- import "Glob" System.FilePath.Glob (glob)
+-- From package Glob. Weirdly conflicts with System.FilePath.Glob from filemanip
+import System.FilePath.Glob (glob)
 import System.Directory (getCurrentDirectory)
 
--- Show error
-import qualified Data.ByteString.Char8 as S8
+-- Used internally for showing errors.
 import Data.Text (unpack)
 
 -- From Cabal-ide-backend
@@ -22,14 +23,13 @@ import System.Process (rawSystem)
 import System.Directory (doesFileExist)
 import System.Exit (ExitCode(ExitSuccess))
 
-
-runBackend :: IO ()
+runBackend :: IO (RunActions RunResult)
 runBackend = do
-             
+
              dir <- getCurrentDirectory
-             
+
              -- Check if configured. If not, configure.
-             isConf <- doesFileExist $ dir ++ "/dist/cabal_macros.h"
+             isConf <- doesFileExist $ dir ++ "/dist/setup-config"
              case isConf of
                True  -> return ExitSuccess 
                False -> rawSystem "cabal" configFlags
@@ -50,18 +50,9 @@ runBackend = do
              showError err
 
              -- Run the updated session.
-             ran <- runStmt session "Application" "main"
-             putStrLn "Starting devel server http://localhost:3000"
+             runStmt session "Application" "main"
 
-             let loop = do
-                   runAction <- runWait ran
-                   case runAction of
-                                Left bs -> S8.putStr bs >> loop 
-                                Right result -> putStrLn $ "Run result: " ++ show result
-
-             loop
-
--- Preety print errors.
+-- Pretty print errors.
 showError :: [SourceError] -> IO ()
 showError [] = return ()
 showError (x: xs) = putStrLn (unpack (errorMsg x))  >> showError xs
