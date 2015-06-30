@@ -6,7 +6,7 @@ import IdeSession
 import Data.Monoid ((<>))
 
 -- import "Glob" System.FilePath.Glob (glob)
--- From package Glob. Weirdly conflicts with System.FilePath.Glob from filemanip
+-- System.FilePath.Glob from package "Glob" Weirdly conflicts with System.FilePath.Glob from "filemanip"
 import System.FilePath.Glob (glob)
 import System.Directory (getCurrentDirectory)
 
@@ -23,7 +23,7 @@ import System.Process (rawSystem)
 import System.Directory (doesFileExist)
 import System.Exit (ExitCode(ExitSuccess))
 
-runBackend :: IO (RunActions RunResult)
+runBackend :: IO (Either [SourceError] IdeSession)
 runBackend = do
 
              dir <- getCurrentDirectory
@@ -35,7 +35,11 @@ runBackend = do
                False -> rawSystem "cabal" configFlags
 
              -- Initializing the session.
-             session <- initSession defaultSessionInitParams defaultSessionConfig {configLocalWorkingDir = Just dir}
+             session <- initSession
+                        defaultSessionInitParams
+                        defaultSessionConfig
+                        {configLocalWorkingDir = Just dir}
+
              extensionList <- extractExtensions
 
              -- Description of session updates.
@@ -43,19 +47,31 @@ runBackend = do
                           <> updateGhcOpts (["-Wall"] ++ extensionList)
 
              -- Actually update the session.
-             _   <- updateSession session update print
+             updateSession session update print
 
              -- Custom error showing.
-             err <- getSourceErrors session
-             showError err
+             errorList' <- getSourceErrors session
+             
+             errorList <- case filterErrors errorList' of
+                            [] -> return []
+                            _ -> return errorList'
+                            
+             printErrors errorList'
 
-             -- Run the updated session.
-             runStmt session "Application" "main"
+             return $ case errorList of
+                        [] -> Right session  
+                        _  -> Left errorList
+
+filterErrors :: [SourceError] -> [SourceError]
+filterErrors [] = []
+filterErrors (x:xs) = case errorKind x  of
+             KindWarning -> filterErrors xs
+             _ -> x : filterErrors xs
 
 -- Pretty print errors.
-showError :: [SourceError] -> IO ()
-showError [] = return ()
-showError (x: xs) = putStrLn (unpack (errorMsg x))  >> showError xs
+printErrors :: [SourceError] -> IO ()
+printErrors [] = return ()
+printErrors (x: xs) = putStrLn (unpack (errorMsg x))  >> printErrors xs
 
 -- | Parse the cabal file to extract the cabal extensions in use.
 extractExtensions :: IO [String]
@@ -65,17 +81,16 @@ extractExtensions = do
                                  [] -> fail "No cabal file."
                                  (x:_) -> return x
               cabalFile <- readFile cabalFilePath
+              
               let unsafePackageDescription = parsePackageDescription cabalFile
-                  -- unsafeHookedBuildInfo = parseHookedBuildInfo cabalFile
+
                   genericPackageDescription = case unsafePackageDescription of
                                             ParseOk _ a -> a
                                             _           -> error "failed package description."
-                  -- hookedBuildInfo = case unsafeHookedBuildInfo of
-                  --                      ParseOk _ a -> a
-                  --                        _           -> error "failed hooked build info"
+
                   packDescription = flattenPackageDescription genericPackageDescription
                   sanitize = last . words
-              -- configure (genericPackageDescription, hookedBuildInfo) emptyConfigFlags
+
               allExt <- return $ usedExtensions $ head $ allBuildInfo packDescription
               listOfExtensions <- return $ map sanitize $ map show allExt
               return $ map ((++) "-X") listOfExtensions

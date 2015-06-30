@@ -1,10 +1,9 @@
 module Main where
 
-import Devel.Watch (compile)
-import Devel.ReverseProxy (runServer)
-import Control.Concurrent (forkIO)
+import Devel.Watch (doCompile)
+import Control.Concurrent
 
 main :: IO ()
-main = do 
-  _ <- forkIO compile
-  runServer
+main = do
+  bul <- newMVar False
+  doCompile bul
