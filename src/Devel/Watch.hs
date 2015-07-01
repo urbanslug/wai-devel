@@ -31,6 +31,7 @@ compile session = do
   stopApp runActionsRunResult threadId
   
   bul <- newMVar True
+  putStrLn "\n\nRestarting...\n\n"
   doCompile bul
 
 doCompile :: MVar Bool -> IO ()
