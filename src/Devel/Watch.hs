@@ -38,7 +38,13 @@ doCompile :: MVar Bool -> IO ()
 doCompile bul = do
   runBackend' <- runBackend
   case runBackend' of
-    Left  errorList -> runServer bul $ toString' errorList
+    Left  errorList -> do
+      tid <- forkIO $ runServer bul $ toString' errorList
+      isDirty   <- newTVarIO False
+      _ <- forkIO $ watch isDirty
+      checkForChange isDirty
+      killThread tid
+      (doCompile bul)
     Right session   -> do
       _ <- forkIO $ compile session
       putStrLn "Starting devel server http://localhost:3000"
