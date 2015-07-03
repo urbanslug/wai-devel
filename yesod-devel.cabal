@@ -18,7 +18,8 @@ cabal-version:       >=1.10
 
 executable yesod-devel
   main-is:             Devel.hs
-  other-modules:       Devel.Run
+  other-modules:       Devel.Build
+                     , Devel.Compile
                      , Devel.Watch
                      , Devel.ReverseProxy
   -- other-extensions:    
@@ -40,5 +41,6 @@ executable yesod-devel
                      , warp
                      , blaze-html
                      , shakespeare
-  hs-source-dirs:      src
+                     , network
+  -- hs-source-dirs:      
   default-language:    Haskell2010
