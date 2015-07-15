@@ -43,9 +43,9 @@ compile = do
 
   -- Check if app is configured. If not, configure.
   isConf <- doesFileExist $ dir ++ "/dist/setup-config"
-  case isConf of
-    True  -> return ExitSuccess 
-    False -> rawSystem "cabal" configFlags
+  _ <- case isConf of
+         True  -> return ExitSuccess 
+         False -> rawSystem "cabal" configFlags
 
   -- Initializing the session.
   session <- initSession

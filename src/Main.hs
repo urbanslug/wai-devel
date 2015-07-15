@@ -1,6 +1,6 @@
 {-|
 Module      : Main
-Description : An entry point for GHC to compile yesod-devel.
+Description : So that it can work as an executable.
 Copyright   : (c)
 License     : GPL-3
 Maintainer  : njagi@urbanslug.com
@@ -9,8 +9,7 @@ Portability : POSIX
 -}
 module Main where
 
-import Devel.Build (build)
-import Control.Concurrent
+import Devel
 
 main :: IO ()
-main = build
+main = buildAndRun

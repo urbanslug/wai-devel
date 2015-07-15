@@ -1,0 +1,3 @@
+[submodule "examples/cats"]
+	path = examples/cats
+	url = git@github.com:urbanslug/cats.git

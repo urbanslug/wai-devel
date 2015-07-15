@@ -21,10 +21,10 @@ import Control.Exception
 
 import Text.Hamlet (shamletFile)
 import Text.Blaze.Html.Renderer.Utf8 (renderHtmlBuilder)
-import Text.Blaze.Html (Html)
+-- import Text.Blaze.Html (Html)
 
-import Control.Concurrent
-import Control.Monad (liftM)
+-- import Control.Concurrent
+-- import Control.Monad (liftM)
 
 import IdeSession (SourceError, errorMsg)
 import Data.Text (unpack)

@@ -10,23 +10,23 @@ Portability : POSIX
 module Devel.Build (build) where
 
 import Devel.Watch
-import Control.Monad.STM
+-- import Control.Monad.STM
 import Control.Concurrent.STM.TVar
 --  import Devel.Build (build)
 import Devel.Compile (compile)
 import Devel.ReverseProxy (runServer, createSocket)
 
-import System.FSNotify
-import Control.Monad      (forever)
-import Control.Concurrent (threadDelay, forkIO, killThread, ThreadId)
+-- import System.FSNotify
+-- import Control.Monad      (forever)
+import Control.Concurrent (forkIO, killThread, ThreadId)
 
 -- For use within `loop`
 import IdeSession
 import qualified Data.ByteString.Char8 as S8
 
-import Control.Concurrent
-import System.Exit
-import Control.Exception.Base
+-- import Control.Concurrent
+-- import System.Exit
+-- import Control.Exception.Base
 
 import Network.Socket
 
@@ -46,7 +46,7 @@ build = do
       _ <- forkIO $ runServer errorList sock
 
       -- Listen for changes in the current working directory.
-      isDirty   <- newTVarIO False
+      isDirty <- newTVarIO False
       _ <- forkIO $ watch isDirty
       checkForChange isDirty
 
