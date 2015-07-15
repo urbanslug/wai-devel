@@ -21,7 +21,7 @@ executable yesod-devel
                      , Devel.Compile
                      , Devel.Watch
                      , Devel.ReverseProxy
-  -- other-extensions:    
+  -- other-extensions: 
   build-depends:       Cabal-ide-backend
                      , Glob
                      , base >=4.8 && <4.9
@@ -52,8 +52,8 @@ library
   other-modules:       Devel.Build
                      , Devel.Compile
                      , Devel.ReverseProxy
-
-  build-depends:       base
+  -- other-extensions:
+  build-depends:       base >=4.8 && <4.9
                      , Cabal-ide-backend
                      , Glob
                      , bytestring
@@ -63,7 +63,7 @@ library
                      , http-reverse-proxy
                      , http-types
                      , http-conduit
-                     , ide-backend >=
+                     , ide-backend
                      , process
                      , stm
                      , text
