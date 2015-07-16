@@ -1,9 +1,10 @@
-[WAI] compliant web development server for haskell web frameworks.
-### NOTE: NOT limited to yesod.
+### Yesod-devel
+[WAI] compliant development server for haskell web frameworks.
+**NOTE: NOT limited to yesod.**
 
-# Yesod-devel
 
-#Usage
+
+### Usage
 At the core of your WAI application have an **Application.hs** file whose `main` function is of type `IO ()`.
 
 If the yesod-devel binary is in your PATH call `yesod-devel` from terminal.
@@ -22,4 +23,4 @@ Functionality to read configs from a config file.
 
 [WAI]: www.yesodweb.com/book/web-application-interface
 [this version]: https://github.com/fpco/ide-backend/tree/19561d9ff5f496d6556f38992bc8d08896d54091
-[examples/]: 
+[examples/]: https://github.com/urbanslug/yesod-devel/tree/master/examples
