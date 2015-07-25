@@ -14,19 +14,15 @@ module Devel.Args where
 import Options.Applicative
 
 -- | Command line arguments for yesod devel.
--- All of them are optional.
+-- All arguments are optional.
 data CmdArgs = CmdArgs
-  { configFlags :: Maybe [String]
-  , interfaceFile :: Maybe FilePath
+  { interfaceFile :: Maybe FilePath
   , reverseProxy :: Bool
   }
 
 cmdArgs :: Parser CmdArgs
 cmdArgs = CmdArgs
-        <$> optional (subparser
-             (command "configure" (info (helper <*> configFlags')
-               (progDesc "use `yesod-devel configure -- <config flags>`"))))
-        <*> optional (strOption
+        <$> optional (strOption
              (long "show-iface"
                <> metavar "FILE"
                <> help "same as `ghc --show-iface`" ))
@@ -34,6 +30,3 @@ cmdArgs = CmdArgs
               (long "reverse-proxy"
                 <> short 'r'
                 <> help "use `-r` to disable reverse proxying." )
-
-configFlags' :: Parser [String]
-configFlags' = many $ argument str  (metavar "FLAGS" <> help "Config flags to pass to `cabal configure")

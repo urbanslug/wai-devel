@@ -19,14 +19,11 @@ import System.Exit (ExitCode(ExitSuccess))
 main :: IO ()
 main = do
  cmdArgs <- execParser opts
- confFlags <- case configFlags cmdArgs of
-                Just flags -> return flags
-                _          -> return []
  _ <- case interfaceFile cmdArgs of
         Just path -> rawSystem "ghc" $ ["--show-iface "] ++ [show path]
         _         -> return ExitSuccess
 
- buildAndRun confFlags
+ buildAndRun 
 
  where opts :: ParserInfo CmdArgs
        opts = info (helper <*> cmdArgs)

@@ -37,24 +37,8 @@ import System.Process (rawSystem)
 import System.Directory (doesFileExist)
 import System.Exit (ExitCode(ExitSuccess))
 
-compile :: [String] -> IO (Either [SourceError] IdeSession)
-compile configFlags' = do
-  -- No need to configure anymore due to changes in ide-backend.
-  -- Will fix.
-  {-
-  dir <- getCurrentDirectory
-  
-  -- Check if app is configured. If not, configure.
-  isConf <- doesFileExist $ dir ++ "/dist/setup-config"
-  configFlags'' <- case configFlags' of
-                    [] -> return configFlags
-                    x  -> return x
-
-  
-  _ <- case isConf of
-         True  -> return ExitSuccess
-         False -> rawSystem "cabal" $ ["configure"] ++ configFlags''
-  -}
+compile :: IO (Either [SourceError] IdeSession)
+compile = do
 
   -- Initializing the session.
   config <- sessionConfigFromEnv
