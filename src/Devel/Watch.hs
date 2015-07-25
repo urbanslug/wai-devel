@@ -39,6 +39,7 @@ watch isDirty = do
   _ <- withManager watch'
   return ()
   where watch' :: WatchManager -> IO StopListening
+        --  Watch for file changes in the current working directory.
         watch' mgr = do _ <- watchTree mgr "." (const True) detectChange
                         forever $ threadDelay maxBound
 

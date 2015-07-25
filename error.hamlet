@@ -5,13 +5,14 @@ $doctype 5
     <title>Error 502
     <style>
       body {
-      background: #e6e6e6;
+      background: #ccc;
       color: #444;
       text-shadow: 1px 1px 1px #ffffff;
       font-family: georgia, serif;
       }
       .wrap {
       margin: auto;
+      background: #fff;
       }
       h1 {
       border-bottom: 1px solid black;
@@ -44,8 +45,8 @@ $doctype 5
       list-style-type:none;
       }
   <body>
+    <h1>Build error(s).
     <div class="wrap">
-      <h1>Build error(s).
       $forall elem <- errorList'
         <li>#{elem}
 

@@ -11,5 +11,6 @@ module Devel where
 
 import Devel.Build (build)
 
-buildAndRun :: IO ()
-buildAndRun = build
+buildAndRun :: [String] -> IO ()
+buildAndRun configFlags = build configFlags
+

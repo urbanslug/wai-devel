@@ -30,12 +30,13 @@ import qualified Data.ByteString.Char8 as S8
 
 import Network.Socket
 
+
 -- | Compiles and runs your WAI application.
-build :: IO ()
-build = do
+build :: [String] -> IO ()
+build configFlags = do
 
   -- Either an ideBackend session or a list of errors from `build`.
-  eitherSession <- compile
+  eitherSession <- compile configFlags
 
   -- Create a new socket each time.
   sock <- createSocket
@@ -54,19 +55,20 @@ build = do
       close sock
 
       -- Restart the whole process.
-      restart
+      restart configFlags
 
     Right session -> do
       --  Run the WAI application in a separate thread.
-      _ <- forkIO $ run session sock
-
+      _ <- forkIO $ run session sock configFlags
+      -- _ <- run session sock configFlags
       putStrLn "Starting devel server http://localhost:3000"
+      -- Start the reverse proxy server
       _ <- forkIO $ runServer [] sock
       listenForEnter
 
 -- | Invoked when we are ready to run the compiled code.
-run :: IdeSession -> Socket -> IO ()
-run session sock = do
+run :: IdeSession -> Socket -> [String] -> IO ()
+run session sock configFlags = do
 
   -- Run the given ide-backend session.
   runActionsRunResult <- runStmt session "Application" "main"
@@ -83,15 +85,15 @@ run session sock = do
   stopApp runActionsRunResult threadId sock
 
   -- Restart the whole process.
-  restart
+  restart configFlags
 
 -- | Restart the whole process.
 -- Like calling main in Main but first notifies that
 -- it's about to restart.
-restart :: IO ()
-restart = do
+restart :: [String] -> IO ()
+restart configFlags = do
   putStrLn "\n\nRestarting...\n\n"
-  build
+  build configFlags
 
 -- | Listen for ENTER on terminal.
 listenForEnter :: IO ()

@@ -10,6 +10,26 @@ Portability : POSIX
 module Main where
 
 import Devel
+import Devel.Args
+import Options.Applicative
+import System.Process (rawSystem)
+import System.Exit (ExitCode(ExitSuccess))
+
 
 main :: IO ()
-main = buildAndRun
+main = do
+ cmdArgs <- execParser opts
+ confFlags <- case configFlags cmdArgs of
+                Just flags -> return flags
+                _          -> return []
+ _ <- case interfaceFile cmdArgs of
+        Just path -> rawSystem "ghc" $ ["--show-iface "] ++ [show path]
+        _         -> return ExitSuccess
+
+ buildAndRun confFlags
+
+ where opts :: ParserInfo CmdArgs
+       opts = info (helper <*> cmdArgs)
+               (fullDesc
+                <> progDesc "A development server for haskell web applications."
+                <> header "Yesod-devel." )

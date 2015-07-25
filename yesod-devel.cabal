@@ -16,11 +16,7 @@ cabal-version:       >=1.10
 executable yesod-devel
   ghc-options:         -rtsopts -O2
   main-is:             Main.hs
-  other-modules:       Devel
-                     , Devel.Build
-                     , Devel.Compile
-                     , Devel.Watch
-                     , Devel.ReverseProxy
+  -- other-modules:     
   -- other-extensions: 
   build-depends:       Cabal-ide-backend >= 1.23
                      , Glob >= 0.7
@@ -32,7 +28,7 @@ executable yesod-devel
                      , http-reverse-proxy >= 0.4
                      , http-types >= 0.8
                      , http-conduit >= 2.1
-                     , ide-backend == 0.9.0.11 
+                     , ide-backend >= 0.10
                      , process >= 1.2
                      , stm >= 2.4
                      , text >= 1.2
@@ -41,6 +37,7 @@ executable yesod-devel
                      , blaze-html >= 0.8
                      , shakespeare >= 2.0
                      , network >= 2.6
+                     , optparse-applicative >= 0.11
                      , yesod-devel
   hs-source-dirs:      src
   default-language:    Haskell2010
@@ -52,6 +49,7 @@ library
   other-modules:       Devel.Build
                      , Devel.Compile
                      , Devel.ReverseProxy
+                     , Devel.Args
   -- other-extensions:
   build-depends:       Cabal-ide-backend >= 1.23
                      , Glob >= 0.7
@@ -63,7 +61,7 @@ library
                      , http-reverse-proxy >= 0.4
                      , http-types >= 0.8
                      , http-conduit >= 2.1
-                     , ide-backend == 0.9.0.11 
+                     , ide-backend >= 0.10
                      , process >= 1.2
                      , stm >= 2.4
                      , text >= 1.2
@@ -71,6 +69,7 @@ library
                      , warp >= 3.0
                      , blaze-html >= 0.8
                      , shakespeare >= 2.0
+                     , optparse-applicative >= 0.11
                      , network >= 2.6
   hs-source-dirs:      src
   default-language:    Haskell2010

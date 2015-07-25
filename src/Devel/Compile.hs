@@ -37,21 +37,30 @@ import System.Process (rawSystem)
 import System.Directory (doesFileExist)
 import System.Exit (ExitCode(ExitSuccess))
 
-compile :: IO (Either [SourceError] IdeSession)
-compile = do
+compile :: [String] -> IO (Either [SourceError] IdeSession)
+compile configFlags' = do
+  -- No need to configure anymore due to changes in ide-backend.
+  -- Will fix.
+  {-
   dir <- getCurrentDirectory
-
+  
   -- Check if app is configured. If not, configure.
   isConf <- doesFileExist $ dir ++ "/dist/setup-config"
+  configFlags'' <- case configFlags' of
+                    [] -> return configFlags
+                    x  -> return x
+
+  
   _ <- case isConf of
-         True  -> return ExitSuccess 
-         False -> rawSystem "cabal" configFlags
+         True  -> return ExitSuccess
+         False -> rawSystem "cabal" $ ["configure"] ++ configFlags''
+  -}
 
   -- Initializing the session.
+  config <- sessionConfigFromEnv
   session <- initSession
              defaultSessionInitParams
-             defaultSessionConfig
-             {configLocalWorkingDir = Just dir}
+             config
 
   extensionList <- extractExtensions
 
@@ -61,7 +70,7 @@ compile = do
 
   -- Actually update the session.
   updateSession session update print
-
+  
   -- Custom error showing.
   errorList' <- getSourceErrors session
 
@@ -70,6 +79,7 @@ compile = do
                  _ -> return errorList'
 
   --  We still want to see errors and warnings on the terminal.
+  -- mapM_ print errorList'
   printErrors errorList'
 
   return $ case errorList of
@@ -86,7 +96,12 @@ filterErrors (x:xs) = case errorKind x  of
 -- | Pretty print errors to terminal.
 printErrors :: [SourceError] -> IO ()
 printErrors [] = return ()
-printErrors (x: xs) = putStrLn (unpack (errorMsg x))  >> printErrors xs
+printErrors (x: xs) = 
+  case errorKind x  of
+    KindWarning ->  putStrLn ("Warning: " ++ (show (errorSpan x)) ++ " " ++ (unpack (errorMsg x)))  >> printErrors xs
+    KindError ->  putStrLn  ("Error: " ++ (show (errorSpan x)) ++ " " ++ (unpack (errorMsg x)))  >> printErrors xs
+    _ -> putStrLn ("Server Died" ++ (show (errorSpan x)) ++ " " ++ (unpack (errorMsg x)))  >> printErrors xs
+
 
 -- | Parse the cabal file to extract the cabal extensions in use.
 extractExtensions :: IO [String]
@@ -112,8 +127,7 @@ extractExtensions = do
 
 
 configFlags :: [String]
-configFlags = [ "configure"
-              , "-flibrary-only"
+configFlags = [ "-flibrary-only"
               , "--disable-tests"
               , "--disable-benchmarks"
               , "-fdevel"
