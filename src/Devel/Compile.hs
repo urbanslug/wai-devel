@@ -22,7 +22,6 @@ import Data.Monoid ((<>))
 -- System.FilePath.Glob from package "Glob" 
 -- Weirdly conflicts with System.FilePath.Glob from "filemanip"
 import System.FilePath.Glob (glob)
-import System.Directory (getCurrentDirectory)
 
 -- Used internally for showing errors.
 import Data.Text (unpack)
@@ -32,10 +31,6 @@ import Data.Text (unpack)
 import Distribution.PackageDescription
 import Distribution.PackageDescription.Parse
 import Distribution.PackageDescription.Configuration
-
-import System.Process (rawSystem)
-import System.Directory (doesFileExist)
-import System.Exit (ExitCode(ExitSuccess))
 
 compile :: IO (Either [SourceError] IdeSession)
 compile = do
@@ -77,14 +72,13 @@ filterErrors (x:xs) = case errorKind x  of
              KindWarning -> filterErrors xs
              _ -> x : filterErrors xs
 
--- | Pretty print errors to terminal.
+-- | Pretty print errors & warnings to the terminal.
 printErrors :: [SourceError] -> IO ()
 printErrors [] = return ()
 printErrors (x: xs) = 
   case errorKind x  of
-    KindWarning ->  putStrLn ("Warning: " ++ (show (errorSpan x)) ++ " " ++ (unpack (errorMsg x)))  >> printErrors xs
-    KindError ->  putStrLn  ("Error: " ++ (show (errorSpan x)) ++ " " ++ (unpack (errorMsg x)))  >> printErrors xs
-    _ -> putStrLn ("Server Died" ++ (show (errorSpan x)) ++ " " ++ (unpack (errorMsg x)))  >> printErrors xs
+    KindWarning -> putStrLn ("Warning: " ++ (show (errorSpan x)) ++ " " ++ (unpack (errorMsg x)))  >> printErrors xs
+    KindError   -> putStrLn  ("Error: " ++ (show (errorSpan x)) ++ " " ++ (unpack (errorMsg x)))  >> printErrors xs
 
 
 -- | Parse the cabal file to extract the cabal extensions in use.
@@ -108,15 +102,3 @@ extractExtensions = do
               allExt <- return $ usedExtensions $ head $ allBuildInfo packDescription
               listOfExtensions <- return $ map sanitize $ map show allExt
               return $ map ((++) "-X") listOfExtensions
-
-
-configFlags :: [String]
-configFlags = [ "-flibrary-only"
-              , "--disable-tests"
-              , "--disable-benchmarks"
-              , "-fdevel"
-              , "--disable-library-profiling"
-              , "--with-ld=yesod-ld-wrapper"
-              , "--with-ghc=yesod-ghc-wrapper"
-              , "--with-ar=yesod-ar-wrapper"
-              , "--with-hc-pkg=ghc-pkg"]

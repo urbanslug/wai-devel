@@ -10,30 +10,20 @@ Portability : POSIX
 module Devel.Build (build) where
 
 import Devel.Watch
--- import Control.Monad.STM
-import Control.Concurrent.STM.TVar
---  import Devel.Build (build)
 import Devel.Compile (compile)
 import Devel.ReverseProxy (runServer, createSocket)
 
--- import System.FSNotify
--- import Control.Monad      (forever)
 import Control.Concurrent (forkIO, killThread, ThreadId)
+import Control.Concurrent.STM.TVar
+import Network.Socket
 
 -- For use within `loop`
 import IdeSession
 import qualified Data.ByteString.Char8 as S8
 
--- import Control.Concurrent
--- import System.Exit
--- import Control.Exception.Base
-
-import Network.Socket
-
-
 -- | Compiles and runs your WAI application.
-build :: IO ()
-build = do
+build :: Bool -> IO ()
+build reverseProxy' = do
 
   -- Either an ideBackend session or a list of errors from `build`.
   eitherSession <- compile
@@ -55,20 +45,25 @@ build = do
       close sock
 
       -- Restart the whole process.
-      restart
+      restart reverseProxy'
 
     Right session -> do
       --  Run the WAI application in a separate thread.
-      _ <- forkIO $ run session sock
-      
-      -- Start the reverse proxy server
-      putStrLn "Starting devel server http://localhost:3000"
-      _ <- forkIO $ runServer [] sock
+      _ <- forkIO $ run session sock reverseProxy'
+
+      case reverseProxy' of
+        False -> putStrLn "Starting devel server without reverse proxy http://localhost:3001"
+
+        -- Start the reverse proxy server
+        True -> do putStrLn "Starting devel server http://localhost:3000"
+                   _ <- forkIO $ runServer [] sock
+                   return ()
+
       listenForEnter
 
 -- | Invoked when we are ready to run the compiled code.
-run :: IdeSession -> Socket -> IO ()
-run session sock = do
+run :: IdeSession -> Socket -> Bool -> IO ()
+run session sock reverseProxy' = do
 
   -- Run the given ide-backend session.
   runActionsRunResult <- runStmt session "Application" "main"
@@ -85,15 +80,15 @@ run session sock = do
   stopApp runActionsRunResult threadId sock
 
   -- Restart the whole process.
-  restart
+  restart reverseProxy'
 
 -- | Restart the whole process.
 -- Like calling main in Main but first notifies that
 -- it's about to restart.
-restart :: IO ()
-restart = do
+restart :: Bool -> IO ()
+restart reverseProxy' = do
   putStrLn "\n\nRestarting...\n\n"
-  build
+  build reverseProxy'
 
 -- | Listen for ENTER on terminal.
 listenForEnter :: IO ()

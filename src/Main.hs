@@ -18,15 +18,17 @@ import System.Exit (ExitCode(ExitSuccess))
 
 main :: IO ()
 main = do
- cmdArgs <- execParser opts
- _ <- case interfaceFile cmdArgs of
-        Just path -> rawSystem "ghc" $ ["--show-iface "] ++ [show path]
-        _         -> return ExitSuccess
+  cmdArgs <- execParser opts
+  _ <- case interfaceFile cmdArgs of
+         Just path -> rawSystem "ghc" $ ["--show-iface "] ++ [show path]
+         _         -> return ExitSuccess
+  reverseProxy' <- return $ reverseProxy cmdArgs
 
- buildAndRun 
 
- where opts :: ParserInfo CmdArgs
-       opts = info (helper <*> cmdArgs)
-               (fullDesc
-                <> progDesc "A development server for haskell web applications."
-                <> header "Yesod-devel." )
+  buildAndRun reverseProxy'
+
+  where opts :: ParserInfo CmdArgs
+        opts = info (helper <*> cmdArgs)
+                (fullDesc
+                 <> progDesc "A development server for haskell web applications."
+                 <> header "Yesod-devel." )

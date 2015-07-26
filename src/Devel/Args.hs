@@ -17,7 +17,8 @@ import Options.Applicative
 -- All arguments are optional.
 data CmdArgs = CmdArgs
   { interfaceFile :: Maybe FilePath
-  , reverseProxy :: Bool
+  -- By deafult reverse proxy should be True
+  , reverseProxy :: Bool 
   }
 
 cmdArgs :: Parser CmdArgs

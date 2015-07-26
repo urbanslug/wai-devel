@@ -46,9 +46,21 @@ watch isDirty = do
         detectChange :: Event -> IO ()
         detectChange event = 
           case event of
-            (Added    _ _) -> return ()
+            (Added "*.hs" _) -> atomically $ writeTVar isDirty True
+            (Added "*.hamlet" _) -> atomically $ writeTVar isDirty True
+            (Added "*.shamlet" _) -> atomically $ writeTVar isDirty True
+            (Added "*.lucius" _) -> atomically $ writeTVar isDirty True
+            (Added "*.julius" _) -> atomically $ writeTVar isDirty True
+            (Added   _ _) -> return ()
+
             (Modified _ _) -> atomically $ writeTVar isDirty True
+
             (Removed  _ _) -> return ()
+            (Removed "*.hs" _) -> atomically $ writeTVar isDirty True
+            (Removed "*.hamlet" _) -> atomically $ writeTVar isDirty True
+            (Removed "*.shamlet" _) -> atomically $ writeTVar isDirty True
+            (Removed "*.lucius" _) -> atomically $ writeTVar isDirty True
+            (Removed "*.julius" _) -> atomically $ writeTVar isDirty True
 
 
 checkForChange :: TVar Bool -> IO ()
