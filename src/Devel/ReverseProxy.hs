@@ -21,14 +21,13 @@ import Control.Exception
 
 import Text.Hamlet (shamletFile)
 import Text.Blaze.Html.Renderer.Utf8 (renderHtmlBuilder)
--- import Text.Blaze.Html (Html)
-
--- import Control.Concurrent
--- import Control.Monad (liftM)
 
 import IdeSession (SourceError, errorMsg)
 import Data.Text (unpack)
 import Network.Socket
+
+import System.Environment (getEnv, getEnvironment)
+import Data.ByteString.Char8 (pack)
 
 -- | run the warp server
 runServer :: [SourceError] -> Socket -> IO ()
@@ -38,8 +37,13 @@ runServer errorList sock =
 -- | Does reverse proxying to localhost:3001
 reverseProxy :: [SourceError] -> IO Application
 reverseProxy errorList = do
+
+  port <- getEnv "wai_port"
+  address <- getEnv "wai_address"
+  
   mgr <- newManager defaultManagerSettings
   errorList' <- return $ toString' errorList
+
   let error500 :: SomeException -> Application
       error500 _ _ respond = respond $
         responseBuilder
@@ -48,7 +52,7 @@ reverseProxy errorList = do
         (renderHtmlBuilder $(shamletFile "error.hamlet"))
 
   return $ waiProxyTo
-         (const $ return $ WPRProxyDest $ ProxyDest "localhost" 3001)
+         (const $ return $ WPRProxyDest $ ProxyDest (pack address) (read port))
          error500
          mgr
   where toString' :: [SourceError] -> [String]
@@ -59,6 +63,7 @@ reverseProxy errorList = do
 -- localhost:3000 here.
 createSocket :: IO Socket
 createSocket = do
+
   sock <- socket AF_INET Stream defaultProtocol
 
   -- Tell the OS *not* to reserve the socket after your program exits.
