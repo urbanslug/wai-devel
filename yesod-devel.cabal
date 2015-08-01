@@ -1,8 +1,8 @@
-name:                yesod-devel
+name:                wai-devel
 version:             0.1.0.0
-synopsis:            Development web server for haskell web frameworks.
-description:         Web server for WAI based web applications.
-homepage:            https://github.com/urbanslug/yesod-devel
+synopsis:            Development web server for haskell web applications that are wai compliant.
+description:         A development server for WAI applications.
+homepage:            https://github.com/urbanslug/wai-devel
 license:             GPL-3
 license-file:        LICENSE
 author:              Njagi Mwaniki
@@ -38,7 +38,7 @@ executable yesod-devel
                      , shakespeare >= 2.0
                      , network >= 2.6
                      , optparse-applicative >= 0.11
-                     , yesod-devel
+                     , wai-devel
   hs-source-dirs:      src
   default-language:    Haskell2010
 
@@ -86,5 +86,5 @@ test-suite tests
                      , tasty >= 0.10
                      , stm >= 2.4
                      , directory >= 1.2
-                     , yesod-devel
+                     , wai-devel
   default-language:    Haskell2010
