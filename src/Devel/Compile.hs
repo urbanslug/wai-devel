@@ -104,4 +104,3 @@ extractExtensions = do
               allExt <- return $ usedExtensions $ head $ allBuildInfo packDescription
               listOfExtensions <- return $ map sanitize $ map show allExt
               return $ map ((++) "-X") listOfExtensions
-

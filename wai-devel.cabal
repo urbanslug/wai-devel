@@ -18,7 +18,7 @@ executable wai-devel
   main-is:             Main.hs
   -- other-modules:     
   -- other-extensions: 
-  build-depends:       base >= 4.7
+  build-depends:       base ==4.*
                      , Cabal-ide-backend >= 1.23
                      , Glob >= 0.7
                      , bytestring >= 0.10
@@ -52,7 +52,7 @@ library
                      , Devel.Args
                      , Devel.Types
   -- other-extensions:
-  build-depends:       base >= 4.8
+  build-depends:       base ==4.*
                      , Glob >= 0.7
                      , Cabal-ide-backend >= 1.23
                      , bytestring >= 0.10
@@ -82,7 +82,7 @@ test-suite tests
   -- exposed-modules:   
   other-modules:       Tests.Watch
   hs-source-dirs:      tests
-  build-depends:       base >= 4.7
+  build-depends:       base ==4.*
                      , HUnit >= 1.2
                      , tasty >= 0.10
                      , stm >= 2.4

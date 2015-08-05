@@ -66,7 +66,7 @@ run :: IdeSession -> Socket -> Bool -> IO ()
 run session sock reverseProxy' = do
 
   -- Run the given ide-backend session.
-  runActionsRunResult <- runStmt session "Application" "main"
+  runActionsRunResult <- runStmt session "Main" "main"
 
   threadId  <- forkIO $ loop runActionsRunResult
 
