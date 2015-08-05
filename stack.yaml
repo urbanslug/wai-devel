@@ -1,0 +1,12 @@
+flags: {}
+packages:
+- '.'
+- location:
+    git: git@github.com:fpco/ide-backend.git
+    commit: b9f7c83db523c24c21e7d8cdcc62dc92cb71d229
+  subdirs:
+  - ide-backend
+  - ide-backend-common
+  - ide-backend-server
+extra-deps: []
+resolver: nightly-2015-08-04

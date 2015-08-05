@@ -13,14 +13,14 @@ build-type:          Simple
 -- extra-source-files:  
 cabal-version:       >=1.10
 
-executable yesod-devel
+executable wai-devel
   ghc-options:         -rtsopts -O2
   main-is:             Main.hs
   -- other-modules:     
   -- other-extensions: 
-  build-depends:       Cabal-ide-backend >= 1.23
+  build-depends:       base >= 4.7
+                     , Cabal-ide-backend >= 1.23
                      , Glob >= 0.7
-                     , base >= 4.8
                      , bytestring >= 0.10
                      , directory >= 1.2
                      , fsnotify >= 0.1
@@ -50,10 +50,11 @@ library
                      , Devel.Compile
                      , Devel.ReverseProxy
                      , Devel.Args
+                     , Devel.Types
   -- other-extensions:
-  build-depends:       Cabal-ide-backend >= 1.23
+  build-depends:       base >= 4.8
                      , Glob >= 0.7
-                     , base >= 4.8
+                     , Cabal-ide-backend >= 1.23
                      , bytestring >= 0.10
                      , directory >= 1.2
                      , fsnotify >= 0.1
@@ -81,7 +82,7 @@ test-suite tests
   -- exposed-modules:   
   other-modules:       Tests.Watch
   hs-source-dirs:      tests
-  build-depends:       base >= 4.8
+  build-depends:       base >= 4.7
                      , HUnit >= 1.2
                      , tasty >= 0.10
                      , stm >= 2.4

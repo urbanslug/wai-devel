@@ -26,23 +26,25 @@ import IdeSession (SourceError, errorMsg)
 import Data.Text (unpack)
 import Network.Socket
 
-import System.Environment (getEnv, getEnvironment)
+import Devel.Types
+
+import System.Environment (getEnv)
 import Data.ByteString.Char8 (pack)
 
 -- | run the warp server
-runServer :: [SourceError] -> Socket -> IO ()
+runServer :: [SourceError'] -> Socket -> IO ()
 runServer errorList sock =
   reverseProxy errorList >>= runSettingsSocket defaultSettings sock
 
 -- | Does reverse proxying to localhost:3001
-reverseProxy :: [SourceError] -> IO Application
+reverseProxy :: [SourceError'] -> IO Application
 reverseProxy errorList = do
 
   port <- getEnv "wai_port"
   address <- getEnv "wai_address"
-  
+
   mgr <- newManager defaultManagerSettings
-  errorList' <- return $ toString' errorList
+  errorList' <- return errorList
 
   let error500 :: SomeException -> Application
       error500 _ _ respond = respond $
@@ -55,9 +57,6 @@ reverseProxy errorList = do
          (const $ return $ WPRProxyDest $ ProxyDest (pack address) (read port))
          error500
          mgr
-  where toString' :: [SourceError] -> [String]
-        toString' [] = []
-        toString' (x: xs) = unpack (errorMsg x) : toString' xs
 
 -- | Create the socket that we will use to communicate with
 -- localhost:3000 here.

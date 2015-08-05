@@ -31,8 +31,9 @@ import Data.Text (unpack)
 import Distribution.PackageDescription
 import Distribution.PackageDescription.Parse
 import Distribution.PackageDescription.Configuration
+import Devel.Types
 
-compile :: IO (Either [SourceError] IdeSession)
+compile :: IO (Either [SourceError'] IdeSession)
 compile = do
 
   -- Initializing the session.
@@ -49,36 +50,37 @@ compile = do
 
   -- Actually update the session.
   updateSession session update print
-  
+
   -- Custom error showing.
   errorList' <- getSourceErrors session
 
   errorList <- case filterErrors errorList' of
                  [] -> return []
-                 _ -> return errorList'
+                 _  -> return $ prettyPrint errorList'
 
   --  We still want to see errors and warnings on the terminal.
-  -- mapM_ print errorList'
-  printErrors errorList'
+  mapM_ putStrLn $ prettyPrint errorList'
+
 
   return $ case errorList of
              [] -> Right session  
              _  -> Left  errorList
 
 -- | Remove the warnings from [SourceError] if any.
+-- Return an empty list if there are no errors and only warnings
+-- Return non empty list if there are errors.
 filterErrors :: [SourceError] -> [SourceError]
 filterErrors [] = []
 filterErrors (x:xs) = case errorKind x  of
              KindWarning -> filterErrors xs
              _ -> x : filterErrors xs
 
--- | Pretty print errors & warnings to the terminal.
-printErrors :: [SourceError] -> IO ()
-printErrors [] = return ()
-printErrors (x: xs) = 
+prettyPrint :: [SourceError] -> [SourceError']
+prettyPrint [] = []
+prettyPrint (x: xs) = 
   case errorKind x  of
-    KindWarning -> putStrLn ("Warning: " ++ (show (errorSpan x)) ++ " " ++ (unpack (errorMsg x)))  >> printErrors xs
-    KindError   -> putStrLn  ("Error: " ++ (show (errorSpan x)) ++ " " ++ (unpack (errorMsg x)))  >> printErrors xs
+    KindWarning -> ("Warning: " ++ (show (errorSpan x)) ++ " " ++ (unpack (errorMsg x))) : prettyPrint xs
+    KindError   -> ("Error: " ++ (show (errorSpan x)) ++ " " ++ (unpack (errorMsg x)))  : prettyPrint xs
 
 
 -- | Parse the cabal file to extract the cabal extensions in use.
@@ -102,3 +104,4 @@ extractExtensions = do
               allExt <- return $ usedExtensions $ head $ allBuildInfo packDescription
               listOfExtensions <- return $ map sanitize $ map show allExt
               return $ map ((++) "-X") listOfExtensions
+

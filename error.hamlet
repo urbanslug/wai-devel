@@ -4,51 +4,39 @@ $doctype 5
     <meta charset='utf-8'>
     <title>Error 502
     <style>
-      body {
-      background: #ccc;
-      color: #444;
-      text-shadow: 1px 1px 1px #ffffff;
-      font-family: georgia, serif;
+      html, body {
+        background-color: #fff;
+        font-family: sans-serif;
       }
-      .wrap {
-      margin: auto;
-      background: #fff;
+      #header {
+        height:80px;
+        background:#00bcd4;
+        width:100%;
+        position:fixed;
+        top: 0;
+        left: 0;
+        right 0;
+        z-index: 1000;
       }
-      h1 {
-      border-bottom: 1px solid black;
+      #header, p {
+        color: #fff;
+        padding-left: 21px;
+        padding-bottom: 21px;
+        padding-top: 10px;
+        font-size: 150%;
       }
-      h2 {
-      margin-top: 0;
-      font-size: 1em;
-      font-style: italic;
-      color: #546369;
+      #wrap {
+        padding: 55px;
+        padding-top: 120px;
+        z-index: -1;
       }
-      header {
-      margin-top: 1em;
-      padding-bottom: 0.25em;
-      border-bottom: 1px solid #ccc;
-      color: #1a6e8e;
-      }
-      footer {
-      padding-top: 10px;
-      border-top: 1px solid #ccc;
-      color: #666;
-      font-size: 12px;
-      position:fixed;
-      left: 0px;
-      bottom: 0px;
-      height: 30px;
-      width: 100%;
-      text-align: center;
-      }
-      li {
+      #wrap, li {
       list-style-type:none;
       }
+      
   <body>
-    <h1>Build error(s).
-    <div class="wrap">
+    <div id="header">
+      <p>Build error(s).
+    <div id="wrap">
       $forall elem <- errorList'
         <li>#{elem}
-
-  <footer>
-    Yesod-devel error page.
