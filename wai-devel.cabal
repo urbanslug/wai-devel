@@ -38,7 +38,9 @@ executable wai-devel
                      , shakespeare >= 2.0
                      , network >= 2.6
                      , optparse-applicative >= 0.11
+                     , filepath >= 1.3
                      , wai-devel
+
   hs-source-dirs:      src
   default-language:    Haskell2010
 
@@ -72,6 +74,7 @@ library
                      , shakespeare >= 2.0
                      , optparse-applicative >= 0.11
                      , network >= 2.6
+                     , filepath >= 1.3
   hs-source-dirs:      src
   default-language:    Haskell2010
 

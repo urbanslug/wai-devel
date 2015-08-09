@@ -33,6 +33,12 @@ import Distribution.PackageDescription.Parse
 import Distribution.PackageDescription.Configuration
 import Devel.Types
 
+-- import System.Directory (getDirectoryContents)
+
+import Control.Monad (forM)
+import System.Directory (doesDirectoryExist, getDirectoryContents)
+import System.FilePath ((</>))
+
 compile :: IO (Either [SourceError'] IdeSession)
 compile = do
 
@@ -43,10 +49,14 @@ compile = do
              config
 
   extensionList <- extractExtensions
+  
+  targetFiles <- getRecursiveContents "test"
 
   -- Description of session updates.
-  let update = updateCodeGeneration True
-               <> updateGhcOpts (["-Wall"] ++ extensionList)
+  let targetList = (TargetsExclude targetFiles :: Targets)
+      update = updateTargets targetList
+                   <> updateCodeGeneration True
+                   <> updateGhcOpts (["-Wall"] ++ extensionList)
 
   -- Actually update the session.
   updateSession session update print
@@ -104,3 +114,15 @@ extractExtensions = do
               allExt <- return $ usedExtensions $ head $ allBuildInfo packDescription
               listOfExtensions <- return $ map sanitize $ map show allExt
               return $ map ((++) "-X") listOfExtensions
+
+getRecursiveContents :: FilePath -> IO [FilePath]
+getRecursiveContents topdir = do
+  names <- getDirectoryContents topdir
+  let properNames = filter (`notElem` [".", ".."]) names
+  paths <- forM properNames $ \name -> do
+    let path = topdir </> name
+    isDirectory <- doesDirectoryExist path
+    if isDirectory
+      then getRecursiveContents path
+      else return [path]
+  return (concat paths)
