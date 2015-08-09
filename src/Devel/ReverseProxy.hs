@@ -33,15 +33,17 @@ import Data.ByteString.Char8 (pack)
 
 -- | run the warp server
 runServer :: [SourceError'] -> Socket -> IO ()
-runServer errorList sock =
-  reverseProxy errorList >>= runSettingsSocket defaultSettings sock
+runServer errorList sock = do
+  app <- reverseProxy errorList
+  runSettingsSocket defaultSettings sock app 
+
 
 -- | Does reverse proxying to localhost:3001
 reverseProxy :: [SourceError'] -> IO Application
 reverseProxy errorList = do
 
-  port <- getEnv "wai_port"
-  address <- getEnv "wai_address"
+  -- port <- getEnv "wai_port"
+  host <- getEnv "wai_host"
 
   mgr <- newManager defaultManagerSettings
   errorList' <- return errorList
@@ -52,9 +54,8 @@ reverseProxy errorList = do
         status502
         [("content-type", "text/html; charset=utf-8")]
         (renderHtmlBuilder $(shamletFile "error.hamlet"))
-
   return $ waiProxyTo
-         (const $ return $ WPRProxyDest $ ProxyDest (pack address) (read port))
+         (const $ return $ WPRProxyDest $ ProxyDest (pack host) (3001 :: Int) )
          error500
          mgr
 

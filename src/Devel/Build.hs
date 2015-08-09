@@ -66,7 +66,7 @@ run :: IdeSession -> Socket -> Bool -> IO ()
 run session sock reverseProxy' = do
 
   -- Run the given ide-backend session.
-  runActionsRunResult <- runStmt session "Main" "main"
+  runActionsRunResult <- runStmt session "Application" "main"
 
   threadId  <- forkIO $ loop runActionsRunResult
 
@@ -97,7 +97,7 @@ listenForEnter = do
   input <- getLine
   case input of
     "" -> return ()
-    _  -> listenForEnter
+    _  -> return ()
 
 -- | Stop the currently running WAI application.
 stopApp :: RunActions RunResult -> ThreadId -> Socket -> IO ()
