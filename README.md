@@ -7,10 +7,16 @@
 ### Usage
 Works with a scaffolded yesod app.
 
+You can either modify your scaffold or create one from yesod-bin at https://github.com/urbanslug/yesod/yesod-bin
+
 Set the environment variable `GHC_PACKAGE_PATH`.
 Mine for example is: `export GHC_PACKAGE_PATH=~/.stack/snapshots/x86_64-linux/lts-2.21/7.8.4/pkgdb:`
 
-First delete app/devel.hs and edit Application.hs `develMain` usually L128 to
+
+##### Modifying your scaffold.
+
+1. Delete app/devel.hs
+2. Edit Application.hs `develMain` usually L128 to
 
 ```haskell
 -- | main function for use by yesod devel
@@ -30,7 +36,7 @@ develMainHelper' getSettingsApp = do
     runSettings settings'' app
 ```
 
-Then run wai-devel in the root of your web application.
+Run wai-devel in the root of your web application.
 
 wai-devel runs the develMain function in Application.hs and launches the scaffold.
 

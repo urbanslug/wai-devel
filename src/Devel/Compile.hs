@@ -33,7 +33,7 @@ import Distribution.PackageDescription.Parse
 import Distribution.PackageDescription.Configuration
 import Devel.Types
 
--- import System.Directory (getDirectoryContents)
+import System.Directory (doesDirectoryExist)
 
 import Control.Monad (forM)
 import System.Directory (doesDirectoryExist, getDirectoryContents)
@@ -49,8 +49,13 @@ compile = do
              config
 
   extensionList <- extractExtensions
-  
-  targetFiles <- getRecursiveContents "test"
+
+  testDir <- doesDirectoryExist "test"
+
+  targetFiles <- case testDir of
+                   True  -> getRecursiveContents "test"
+                   False -> return []
+
 
   -- Description of session updates.
   let targetList = (TargetsExclude targetFiles :: Targets)

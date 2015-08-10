@@ -29,7 +29,7 @@ import Network.Socket
 import Devel.Types
 
 import System.Environment (getEnv)
-import Data.ByteString.Char8 (pack)
+import Data.ByteString.Char8 (pack, ByteString)
 
 -- | run the warp server
 runServer :: [SourceError'] -> Socket -> IO ()
@@ -43,7 +43,7 @@ reverseProxy :: [SourceError'] -> IO Application
 reverseProxy errorList = do
 
   -- port <- getEnv "wai_port"
-  host <- getEnv "wai_host"
+  -- host <- getEnv "wai_host"
 
   mgr <- newManager defaultManagerSettings
   errorList' <- return errorList
@@ -55,7 +55,7 @@ reverseProxy errorList = do
         [("content-type", "text/html; charset=utf-8")]
         (renderHtmlBuilder $(shamletFile "error.hamlet"))
   return $ waiProxyTo
-         (const $ return $ WPRProxyDest $ ProxyDest "127.0.0.1" (3001 :: Int) )
+         (const $ return $ WPRProxyDest $ ProxyDest (pack "127.0.0.1" :: ByteString) (3001 :: Int) )
          error500
          mgr
 
