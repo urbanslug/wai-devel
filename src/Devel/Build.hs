@@ -21,6 +21,8 @@ import Network.Socket
 import IdeSession
 import qualified Data.ByteString.Char8 as S8
 
+import Control.Concurrent (threadDelay)
+
 -- | Compiles and runs your WAI application.
 build :: Bool -> IO ()
 build reverseProxy' = do
@@ -52,12 +54,19 @@ build reverseProxy' = do
       _ <- forkIO $ run session sock reverseProxy'
 
       case reverseProxy' of
-        False -> putStrLn "Starting devel server without reverse proxy http://localhost:3001"
+        False -> putStrLn "Project built. Preparing to start devel server without reverse proxy"
 
         -- Start the reverse proxy server
-        True -> do putStrLn "Starting devel server http://localhost:3000"
-                   _ <- forkIO $ runServer [] sock
-                   return ()
+        True -> do putStrLn "Project built. Preparing to start devel server"
+                   -- _ <- forkIO $ runServer [] sock
+                   -- For watching for file changes in current working directory.
+                   isDirty <- newTVarIO False
+                   -- Watch for changes in the current working directory.
+                   _ <- forkIO $ watch isDirty
+                   -- Block until change is made then carry on with program execution.
+                   checkForChange isDirty
+                   restart reverseProxy'
+
 
       listenForEnter
 
@@ -69,18 +78,10 @@ run session sock reverseProxy' = do
   runActionsRunResult <- runStmt session "Application" "develMain"
 
   threadId  <- forkIO $ loop runActionsRunResult
+  
+  _ <- threadDelay 1000
 
-  -- For watching for file changes in current working directory.
-  isDirty <- newTVarIO False
-
-  -- Watch for changes in the current working directory.
-  _ <- forkIO $ watch isDirty
-  -- Block until change is made then carry on with program execution.
-  checkForChange isDirty
-  stopApp runActionsRunResult threadId sock
-
-  -- Restart the whole process.
-  restart reverseProxy'
+  runServer [] sock
 
 -- | Restart the whole process.
 -- Like calling main in Main but first notifies that

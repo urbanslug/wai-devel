@@ -32,6 +32,8 @@ import Control.Concurrent
 
 -- import Network.Socket
 
+import System.Directory (getCurrentDirectory)
+
 -- | Watches for file modification in the current working directory.
 --   When a change is found. It modifies isDirty to True.
 watch :: TVar Bool -> IO ()
@@ -40,15 +42,15 @@ watch isDirty = do
   return ()
   where watch' :: WatchManager -> IO StopListening
         --  Watch for file changes in the current working directory.
-        watch' mgr = do _ <- watchTree mgr "." (const True) (\_ -> atomically $ writeTVar isDirty True) -- detectChange
+        watch' mgr = do _ <- watchTree mgr "." (const True)  (\_ -> atomically $ writeTVar isDirty True) -- detectChange
                         forever $ threadDelay maxBound
         {-
         detectChange :: Event -> IO ()
         detectChange event = 
           case event of
-            (Added   _ _)  -> atomically $ writeTVar isDirty True
+            (Added   _ _)  -> return ()
             (Modified _ _) -> atomically $ writeTVar isDirty True
-            (Removed  _ _) -> atomically $ writeTVar isDirty True
+            (Removed  _ _) -> return ()
         -}
 
 

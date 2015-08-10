@@ -16,12 +16,6 @@ Either a list of source errors or an ide-backend session.
 module Devel.Compile (compile) where
 
 import IdeSession
-import Data.Monoid ((<>))
-
--- import "Glob" System.FilePath.Glob (glob)
--- System.FilePath.Glob from package "Glob" 
--- Weirdly conflicts with System.FilePath.Glob from "filemanip"
-import System.FilePath.Glob (glob)
 
 -- Used internally for showing errors.
 import Data.Text (unpack)
@@ -33,17 +27,22 @@ import Distribution.PackageDescription.Parse
 import Distribution.PackageDescription.Configuration
 import Devel.Types
 
-import System.Directory (doesDirectoryExist)
-
 import Control.Monad (forM)
 import System.Directory (doesDirectoryExist, getDirectoryContents)
 import System.FilePath ((</>))
+import Data.Monoid ((<>))
+import System.FilePath.Glob (glob)
+import System.Environment (lookupEnv)
 
 compile :: IO (Either [SourceError'] IdeSession)
 compile = do
 
+  packagePath <- lookupEnv "GHC_PACKAGE_PATH"
+  config <-  case packagePath of
+               Just path -> getConfig path
+               _ -> sessionConfigFromEnv 
+
   -- Initializing the session.
-  config <- sessionConfigFromEnv
   session <- initSession
              defaultSessionInitParams
              config
@@ -81,6 +80,19 @@ compile = do
              [] -> Right session  
              _  -> Left  errorList
 
+
+getConfig :: String -> IO SessionConfig
+getConfig path = do
+  config <- sessionConfigFromEnv
+  let path' = (init path) ++ "/"
+      config' = config {configPackageDBStack=
+                              [GlobalPackageDB
+                              , UserPackageDB
+                              , SpecificPackageDB path'
+                              ]}
+  return config'
+
+
 -- | Remove the warnings from [SourceError] if any.
 -- Return an empty list if there are no errors and only warnings
 -- Return non empty list if there are errors.
@@ -89,6 +101,7 @@ filterErrors [] = []
 filterErrors (x:xs) = case errorKind x  of
              KindWarning -> filterErrors xs
              _ -> x : filterErrors xs
+
 
 prettyPrint :: [SourceError] -> [SourceError']
 prettyPrint [] = []
@@ -119,6 +132,7 @@ extractExtensions = do
               allExt <- return $ usedExtensions $ head $ allBuildInfo packDescription
               listOfExtensions <- return $ map sanitize $ map show allExt
               return $ map ((++) "-X") listOfExtensions
+
 
 getRecursiveContents :: FilePath -> IO [FilePath]
 getRecursiveContents topdir = do
