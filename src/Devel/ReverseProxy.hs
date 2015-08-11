@@ -22,8 +22,8 @@ import Control.Exception
 import Text.Hamlet (shamletFile)
 import Text.Blaze.Html.Renderer.Utf8 (renderHtmlBuilder)
 
-import IdeSession (SourceError, errorMsg)
-import Data.Text (unpack)
+-- import IdeSession (SourceError, errorMsg)
+-- import Data.Text (unpack)
 import Network.Socket
 
 import Devel.Types

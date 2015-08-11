@@ -3,7 +3,7 @@ packages:
 - '.'
 - location:
     git: git@github.com:fpco/ide-backend.git
-    commit: b9f7c83db523c24c21e7d8cdcc62dc92cb71d229
+    commit: 4b57b77d59d3261c8eef5fa40159ab9d78a6d197
   subdirs:
   - ide-backend
   - ide-backend-common

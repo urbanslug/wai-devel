@@ -51,27 +51,30 @@ build reverseProxy' = do
 
     Right session -> do
       --  Run the WAI application in a separate thread.
-      _ <- forkIO $ run session sock reverseProxy'
+      (runActionsRunResult, threadId) <- run session sock reverseProxy'
 
       case reverseProxy' of
         False -> putStrLn "Project built. Preparing to start devel server without reverse proxy"
 
         -- Start the reverse proxy server
         True -> do putStrLn "Project built. Preparing to start devel server"
-                   -- _ <- forkIO $ runServer [] sock
+
                    -- For watching for file changes in current working directory.
                    isDirty <- newTVarIO False
+
                    -- Watch for changes in the current working directory.
                    _ <- forkIO $ watch isDirty
+                   
                    -- Block until change is made then carry on with program execution.
                    checkForChange isDirty
+
+                   stopApp runActionsRunResult threadId sock
+
                    restart reverseProxy'
 
 
-      listenForEnter
-
 -- | Invoked when we are ready to run the compiled code.
-run :: IdeSession -> Socket -> Bool -> IO ()
+run :: IdeSession -> Socket -> Bool -> IO (RunActions RunResult, ThreadId)
 run session sock reverseProxy' = do
 
   -- Run the given ide-backend session.
@@ -81,7 +84,9 @@ run session sock reverseProxy' = do
   
   _ <- threadDelay 1000
 
-  runServer [] sock
+  _ <- forkIO $ runServer [] sock
+  
+  return (runActionsRunResult, threadId)
 
 -- | Restart the whole process.
 -- Like calling main in Main but first notifies that
@@ -90,15 +95,6 @@ restart :: Bool -> IO ()
 restart reverseProxy' = do
   putStrLn "\n\nRestarting...\n\n"
   build reverseProxy'
-
--- | Listen for ENTER on terminal.
-listenForEnter :: IO ()
-listenForEnter = do
-  putStrLn "Press ENTER to exit."
-  input <- getLine
-  case input of
-    "" -> return ()
-    _  -> return ()
 
 -- | Stop the currently running WAI application.
 stopApp :: RunActions RunResult -> ThreadId -> Socket -> IO ()

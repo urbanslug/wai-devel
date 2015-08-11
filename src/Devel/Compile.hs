@@ -37,10 +37,11 @@ import System.Environment (lookupEnv)
 compile :: IO (Either [SourceError'] IdeSession)
 compile = do
 
-  packagePath <- lookupEnv "GHC_PACKAGE_PATH"
-  config <-  case packagePath of
-               Just path -> getConfig path
-               _ -> sessionConfigFromEnv 
+  -- packagePath <- lookupEnv "GHC_PACKAGE_PATH"
+  -- config <-  case packagePath of
+  --               Just path -> getConfig path
+  --                 _ -> sessionConfigFromEnv 
+  config <- sessionConfigFromEnv
 
   -- Initializing the session.
   session <- initSession
@@ -109,7 +110,7 @@ prettyPrint (x: xs) =
   case errorKind x  of
     KindWarning -> ("Warning: " ++ (show (errorSpan x)) ++ " " ++ (unpack (errorMsg x))) : prettyPrint xs
     KindError   -> ("Error: " ++ (show (errorSpan x)) ++ " " ++ (unpack (errorMsg x)))  : prettyPrint xs
-
+    KindServerDied -> (show (errorKind x)) : prettyPrint xs
 
 -- | Parse the cabal file to extract the cabal extensions in use.
 extractExtensions :: IO [String]
