@@ -13,4 +13,4 @@ install:
 
 script:
   - stack test
-  - STACK_YAML=stack-7.10.yaml stack test
+  - STACK_YAML=stack-7.10.yaml stack install happy && STACK_YAML=stack-7.10.yaml stack test

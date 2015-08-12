@@ -28,18 +28,15 @@ import Distribution.PackageDescription.Configuration
 import Devel.Types
 
 import Control.Monad (forM)
-import System.Directory (doesDirectoryExist, getDirectoryContents)
-import System.FilePath ((</>))
+import System.Directory (doesDirectoryExist, doesFileExist, getDirectoryContents)
+import System.FilePath ((</>), splitSearchPath)
 import Data.Monoid ((<>))
 import System.FilePath.Glob (glob)
-import System.Environment (lookupEnv)
 
-compile :: IO (Either [SourceError'] IdeSession)
-compile = do
 
-  config <- sessionConfigFromEnv
+compile :: SessionConfig -> IO (Either [SourceError'] IdeSession)
+compile config = do
 
-  -- Initializing the session.
   session <- initSession
              defaultSessionInitParams
              config
@@ -48,9 +45,15 @@ compile = do
 
   testDir <- doesDirectoryExist "test"
 
-  targetFiles <- case testDir of
+  targetFiles' <- case testDir of
                    True  -> getRecursiveContents "test"
                    False -> return []
+
+  isDevelMain <- doesFileExist "app/DevelMain.hs"
+
+  targetFiles <- case isDevelMain of
+                    True -> return $ targetFiles' ++ ["app/DevelMain.hs"]
+                    _    -> return $ targetFiles'
 
 
   -- Description of session updates.
@@ -71,7 +74,6 @@ compile = do
 
   --  We still want to see errors and warnings on the terminal.
   mapM_ putStrLn $ prettyPrint errorList'
-
 
   return $ case errorList of
              [] -> Right session  

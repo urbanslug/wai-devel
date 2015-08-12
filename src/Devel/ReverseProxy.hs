@@ -62,7 +62,6 @@ reverseProxy errorList = do
         [("content-type", "text/html; charset=utf-8")]
         (renderHtmlBuilder $(shamletFile "error.hamlet"))
   return $ waiProxyTo
-         -- (const $ return $ WPRProxyDest $ ProxyDest (pack "127.0.0.1" :: ByteString) (3001 :: Int) )
          (const $ return $ WPRProxyDest $ ProxyDest host port)
          error500
          mgr

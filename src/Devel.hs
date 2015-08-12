@@ -10,7 +10,7 @@ Portability : POSIX
 module Devel where
 
 import Devel.Build (build)
+import IdeSession (sessionConfigFromEnv)
 
 buildAndRun :: Bool -> IO ()
-buildAndRun reverseProxy' = build reverseProxy'
-
+buildAndRun reverseProxy = sessionConfigFromEnv >>= build reverseProxy

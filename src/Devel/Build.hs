@@ -24,11 +24,11 @@ import qualified Data.ByteString.Char8 as S8
 import Control.Concurrent (threadDelay)
 
 -- | Compiles and runs your WAI application.
-build :: Bool -> IO ()
-build reverseProxy' = do
+build :: Bool -> SessionConfig -> IO ()
+build reverseProxy' config = do
 
   -- Either an ideBackend session or a list of errors from `build`.
-  eitherSession <- compile
+  eitherSession <- compile config 
 
   -- Create a new socket each time.
   sock <- createSocket
@@ -47,7 +47,7 @@ build reverseProxy' = do
       close sock
 
       -- Restart the whole process.
-      restart reverseProxy'
+      restart reverseProxy' config
 
     Right session -> do
       --  Run the WAI application in a separate thread.
@@ -70,7 +70,7 @@ build reverseProxy' = do
 
                    stopApp runActionsRunResult threadId sock
 
-                   restart reverseProxy'
+                   restart reverseProxy' config
 
 
 -- | Invoked when we are ready to run the compiled code.
@@ -91,10 +91,10 @@ run session sock reverseProxy' = do
 -- | Restart the whole process.
 -- Like calling main in Main but first notifies that
 -- it's about to restart.
-restart :: Bool -> IO ()
-restart reverseProxy' = do
+restart :: Bool -> SessionConfig -> IO ()
+restart reverseProxy' config = do
   putStrLn "\n\nRestarting...\n\n"
-  build reverseProxy'
+  build reverseProxy' config
 
 -- | Stop the currently running WAI application.
 stopApp :: RunActions RunResult -> ThreadId -> Socket -> IO ()
