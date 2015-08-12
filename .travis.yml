@@ -9,8 +9,6 @@ before_install:
 
 install:
   - stack setup
-  - stack --resolver ghc-7.10 setup --reinstall
 
 script:
   - stack test
-  - STACK_YAML=stack-7.10.yaml stack test
