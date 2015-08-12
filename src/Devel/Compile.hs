@@ -37,10 +37,6 @@ import System.Environment (lookupEnv)
 compile :: IO (Either [SourceError'] IdeSession)
 compile = do
 
-  -- packagePath <- lookupEnv "GHC_PACKAGE_PATH"
-  -- config <-  case packagePath of
-  --               Just path -> getConfig path
-  --                 _ -> sessionConfigFromEnv 
   config <- sessionConfigFromEnv
 
   -- Initializing the session.
@@ -60,8 +56,8 @@ compile = do
   -- Description of session updates.
   let targetList = (TargetsExclude targetFiles :: Targets)
       update = updateTargets targetList
-                   <> updateCodeGeneration True
-                   <> updateGhcOpts (["-Wall"] ++ extensionList)
+               <> updateCodeGeneration True
+               <> updateGhcOpts (["-Wall"] ++ extensionList)
 
   -- Actually update the session.
   updateSession session update print
@@ -69,9 +65,9 @@ compile = do
   -- Custom error showing.
   errorList' <- getSourceErrors session
 
-  errorList <- case filterErrors errorList' of
-                 [] -> return []
-                 _  -> return $ prettyPrint errorList'
+  errorList  <- case filterErrors errorList' of
+                    [] -> return []
+                    _  -> return $ prettyPrint errorList'
 
   --  We still want to see errors and warnings on the terminal.
   mapM_ putStrLn $ prettyPrint errorList'
@@ -80,18 +76,6 @@ compile = do
   return $ case errorList of
              [] -> Right session  
              _  -> Left  errorList
-
-
-getConfig :: String -> IO SessionConfig
-getConfig path = do
-  config <- sessionConfigFromEnv
-  let path' = (init path) ++ "/"
-      config' = config {configPackageDBStack=
-                              [GlobalPackageDB
-                              , UserPackageDB
-                              , SpecificPackageDB path'
-                              ]}
-  return config'
 
 
 -- | Remove the warnings from [SourceError] if any.
@@ -111,6 +95,7 @@ prettyPrint (x: xs) =
     KindWarning -> ("Warning: " ++ (show (errorSpan x)) ++ " " ++ (unpack (errorMsg x))) : prettyPrint xs
     KindError   -> ("Error: " ++ (show (errorSpan x)) ++ " " ++ (unpack (errorMsg x)))  : prettyPrint xs
     KindServerDied -> (show (errorKind x)) : prettyPrint xs
+
 
 -- | Parse the cabal file to extract the cabal extensions in use.
 extractExtensions :: IO [String]

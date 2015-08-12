@@ -9,4 +9,4 @@ packages:
   - ide-backend-common
   - ide-backend-server
 extra-deps: []
-resolver: lts-2.21
+resolver: lts-2.22
