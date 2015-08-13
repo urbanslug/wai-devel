@@ -9,7 +9,8 @@ before_install:
 
 install:
   - stack setup
-  - (sleep 60; echo 1) && stack --resolver ghc-7.10 setup --reinstall
+  - stack --resolver ghc-7.10 setup --reinstall
 
 script:
-  - (sleep 60; echo 1) && stack --no-terminal test -j1
+  - stack test wai-devel
+  - STACK_YAML=stack-7.10.yaml stack test wai-devel
