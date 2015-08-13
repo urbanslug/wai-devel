@@ -8,9 +8,11 @@ before_install:
   - sudo apt-get install stack -y
 
 install:
-  - stack setup
-  - stack --resolver ghc-7.10 setup --reinstall
+  - (sleep 60; echo 1) && stack setup
+  - (sleep 60; echo 1) && stack --resolver ghc-7.10 setup --reinstall
 
 script:
-  - stack test wai-devel
-  - STACK_YAML=stack-7.10.yaml stack test wai-devel
+  - stack --no-terminal build wai-devel
+  - stack --no-terminal test wai-devel
+  - STACK_YAML=stack-7.10.yaml stack --no-terminal build wai-devel
+  - STACK_YAML=stack-7.10.yaml stack --no-terminal test wai-devel

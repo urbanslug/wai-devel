@@ -29,7 +29,7 @@ import Devel.Types
 
 import Control.Monad (forM)
 import System.Directory (doesDirectoryExist, doesFileExist, getDirectoryContents)
-import System.FilePath ((</>), splitSearchPath)
+import System.FilePath ((</>))
 import Data.Monoid ((<>))
 import System.FilePath.Glob (glob)
 

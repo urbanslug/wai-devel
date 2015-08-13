@@ -42,14 +42,14 @@ runServer errorList sock = do
 reverseProxy :: [SourceError'] -> IO Application
 reverseProxy errorList = do
 
-  port <- lookupEnv "wai_port"
-  host <- lookupEnv "wai_host"
+  port' <- lookupEnv "wai_port"
+  host' <- lookupEnv "wai_host"
   
-  port <- case port of
-            Just port -> return (read port :: Int)
+  port <- case port' of
+            Just port'' -> return (read port'' :: Int)
             _         -> return (3001 :: Int)
-  host <- case host of
-            Just host -> return (pack host :: ByteString)
+  host <- case host' of
+            Just host'' -> return (pack host'' :: ByteString)
             _         -> return (pack "127.0.0.1" :: ByteString)
 
   mgr <- newManager defaultManagerSettings
