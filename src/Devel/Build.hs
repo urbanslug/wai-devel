@@ -52,25 +52,19 @@ build reverseProxy' config = do
     Right session -> do
       --  Run the WAI application in a separate thread.
       (runActionsRunResult, threadId) <- run session sock reverseProxy'
+      
+      -- For watching for file changes in current working directory.
+      isDirty <- newTVarIO False
 
-      case reverseProxy' of
-        False -> putStrLn "Project built. Preparing to start devel server without reverse proxy"
+      -- Watch for changes in the current working directory.
+      _ <- forkIO $ watch isDirty
+      
+      -- Block until change is made then carry on with program execution.
+      checkForChange isDirty
 
-        -- Start the reverse proxy server
-        True -> do putStrLn "Project built. Preparing to start devel server"
-
-                   -- For watching for file changes in current working directory.
-                   isDirty <- newTVarIO False
-
-                   -- Watch for changes in the current working directory.
-                   _ <- forkIO $ watch isDirty
-                   
-                   -- Block until change is made then carry on with program execution.
-                   checkForChange isDirty
-
-                   stopApp runActionsRunResult threadId sock
-
-                   restart reverseProxy' config
+      stopApp runActionsRunResult threadId sock
+       
+      restart reverseProxy' config
 
 
 -- | Invoked when we are ready to run the compiled code.
@@ -83,9 +77,13 @@ run session sock reverseProxy' = do
   threadId  <- forkIO $ loop runActionsRunResult
   
   _ <- threadDelay 1000
-
-  _ <- forkIO $ runServer [] sock
   
+  case reverseProxy' of
+    False -> putStrLn "Project built. Preparing to start devel server without reverse proxy"
+    True -> do putStrLn "Project built. Preparing to start devel server"
+               _ <- forkIO $ runServer [] sock
+               return ()
+
   return (runActionsRunResult, threadId)
 
 -- | Restart the whole process.

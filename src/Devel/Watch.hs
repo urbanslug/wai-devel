@@ -28,11 +28,12 @@ watch :: TVar Bool -> IO ()
 watch isDirty = do
   manager <- startManagerConf defaultConfig
 
-  _ <- treeExtExists manager "." "hamlet"  (\_ -> atomically $ writeTVar isDirty True)
-  _ <- treeExtExists manager "." "shamlet" (\_ -> atomically $ writeTVar isDirty True)
-  _ <- treeExtExists manager "." "lucius"  (\_ -> atomically $ writeTVar isDirty True)
-  _ <- treeExtExists manager "." "hs"      (\_ -> atomically $ writeTVar isDirty True)
-  _ <- treeExtExists manager "." "yaml"    (\_ -> atomically $ writeTVar isDirty True)
+  _ <- treeExtAny manager "." "hamlet"  (\_ -> atomically $ writeTVar isDirty True)
+  _ <- treeExtAny manager "." "shamlet" (\_ -> atomically $ writeTVar isDirty True)
+  _ <- treeExtAny manager "." "lucius"  (\_ -> atomically $ writeTVar isDirty True)
+  _ <- treeExtAny manager "." "julius"  (\_ -> atomically $ writeTVar isDirty True)
+  _ <- treeExtAny manager "." "hs"      (\_ -> atomically $ writeTVar isDirty True)
+  _ <- treeExtAny manager "." "yaml"    (\_ -> atomically $ writeTVar isDirty True)
 
   forever $ threadDelay maxBound
   stopManager manager
