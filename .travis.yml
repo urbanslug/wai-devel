@@ -9,6 +9,7 @@ before_install:
 
 install:
   - stack setup
+  - (sleep 60; echo 1) && stack --resolver ghc-7.10 setup --reinstall
 
 script:
-  - (sleep 60; echo 1) && stack --no-terminal -j1
+  - (sleep 60; echo 1) && stack --no-terminal test -j1
