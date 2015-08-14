@@ -33,6 +33,7 @@ watch isDirty = do
   _ <- treeExtAny manager "." "lucius"  (\_ -> atomically $ writeTVar isDirty True)
   _ <- treeExtAny manager "." "julius"  (\_ -> atomically $ writeTVar isDirty True)
   _ <- treeExtAny manager "." "hs"      (\_ -> atomically $ writeTVar isDirty True)
+  _ <- treeExtAny manager "." "lhs"      (\_ -> atomically $ writeTVar isDirty True)
   _ <- treeExtAny manager "." "yaml"    (\_ -> atomically $ writeTVar isDirty True)
 
   forever $ threadDelay maxBound

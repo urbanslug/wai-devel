@@ -70,10 +70,10 @@ compile config = do
 
   errorList  <- case filterErrors errorList' of
                     [] -> return []
-                    _  -> return $ prettyPrint errorList'
+                    _  -> return $ prettyPrintErrors errorList'
 
   --  We still want to see errors and warnings on the terminal.
-  mapM_ putStrLn $ prettyPrint errorList'
+  mapM_ putStrLn $ prettyPrintErrors errorList'
 
   return $ case errorList of
              [] -> Right session  
@@ -90,13 +90,13 @@ filterErrors (x:xs) = case errorKind x  of
              _ -> x : filterErrors xs
 
 
-prettyPrint :: [SourceError] -> [SourceError']
-prettyPrint [] = []
-prettyPrint (x: xs) = 
+prettyPrintErrors :: [SourceError] -> [SourceError']
+prettyPrintErrors [] = []
+prettyPrintErrors (x: xs) = 
   case errorKind x  of
-    KindWarning -> ("Warning: " ++ (show (errorSpan x)) ++ " " ++ (unpack (errorMsg x))) : prettyPrint xs
-    KindError   -> ("Error: " ++ (show (errorSpan x)) ++ " " ++ (unpack (errorMsg x)))  : prettyPrint xs
-    KindServerDied -> (show (errorKind x)) : prettyPrint xs
+    KindWarning -> ("Warning: " ++ (show (errorSpan x)) ++ " " ++ (unpack (errorMsg x))) : prettyPrintErrors xs
+    KindError   -> ("Error: " ++ (show (errorSpan x)) ++ " " ++ (unpack (errorMsg x)))  : prettyPrintErrors xs
+    KindServerDied -> (show (errorKind x)) : prettyPrintErrors xs
 
 
 -- | Parse the cabal file to extract the cabal extensions in use.
