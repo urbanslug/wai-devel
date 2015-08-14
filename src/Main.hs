@@ -22,13 +22,21 @@ main = do
   _ <- case interfaceFile cmdArgs of
          Just path -> rawSystem "ghc" $ ["--show-iface "] ++ [show path]
          _         -> return ExitSuccess
+
   reverseProxy' <- return $ reverseProxy cmdArgs
 
+  buildFile' <- return $ case buildFile cmdArgs of
+                              Just file -> file
+                              _ -> "Application.hs"
 
-  buildAndRun reverseProxy'
+  runFunction' <- return $ case runFunction cmdArgs of
+                               Just module' -> module'
+                               _ -> "develMain"
+
+  buildAndRun buildFile' runFunction' reverseProxy'
 
   where opts :: ParserInfo CmdArgs
         opts = info (helper <*> cmdArgs)
                 (fullDesc
-                 <> progDesc "A development server for haskell web applications."
-                 <> header "Yesod-devel." )
+                 <> progDesc "For WAI complaint haskell web applications"
+                 <> header "wai-devel: development server for haskell web applications." )

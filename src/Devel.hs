@@ -12,5 +12,6 @@ module Devel where
 import Devel.Build (build)
 import IdeSession (sessionConfigFromEnv)
 
-buildAndRun :: Bool -> IO ()
-buildAndRun reverseProxy = sessionConfigFromEnv >>= build reverseProxy
+buildAndRun :: FilePath -> String ->  Bool -> IO ()
+buildAndRun buildFile runFunction reverseProxy =
+  sessionConfigFromEnv >>= \config -> build buildFile runFunction reverseProxy config

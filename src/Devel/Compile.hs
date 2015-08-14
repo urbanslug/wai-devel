@@ -11,7 +11,7 @@ compile compiles the app to give:
 Either a list of source errors or an ide-backend session.
 -}
 
-{-# LANGUAGE PackageImports #-}
+{-# LANGUAGE PackageImports, OverloadedStrings #-}
 
 module Devel.Compile (compile) where
 
@@ -34,8 +34,8 @@ import Data.Monoid ((<>))
 import System.FilePath.Glob (glob)
 
 
-compile :: SessionConfig -> IO (Either [SourceError'] IdeSession)
-compile config = do
+compile :: FilePath -> SessionConfig -> IO (Either [SourceError'] IdeSession)
+compile buildFile config = do
 
   session <- initSession
              defaultSessionInitParams
@@ -43,21 +43,8 @@ compile config = do
 
   extensionList <- extractExtensions
 
-  testDir <- doesDirectoryExist "test"
-
-  targetFiles' <- case testDir of
-                   True  -> getRecursiveContents "test"
-                   False -> return []
-
-  isDevelMain <- doesFileExist "app/DevelMain.hs"
-
-  targetFiles <- case isDevelMain of
-                    True -> return $ targetFiles' ++ ["app/DevelMain.hs"]
-                    _    -> return $ targetFiles'
-
-
   -- Description of session updates.
-  let targetList = (TargetsExclude targetFiles :: Targets)
+  let targetList = (TargetsInclude [buildFile] :: Targets)
       update = updateTargets targetList
                <> updateCodeGeneration True
                <> updateGhcOpts (["-Wall"] ++ extensionList)

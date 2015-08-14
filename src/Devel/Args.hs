@@ -17,6 +17,8 @@ import Options.Applicative
 -- All arguments are optional.
 data CmdArgs = CmdArgs
   { interfaceFile :: Maybe FilePath
+  , buildFile :: Maybe FilePath
+  , runFunction :: Maybe String
   -- By deafult reverse proxy should be True
   , reverseProxy :: Bool 
   }
@@ -24,6 +26,16 @@ data CmdArgs = CmdArgs
 cmdArgs :: Parser CmdArgs
 cmdArgs = CmdArgs
         <$> optional (strOption
+             (long "file"
+               <> short 'f'
+               <> metavar "FILEPATH"
+               <> help "The path file with the function you want to run"))
+        <*> optional (strOption
+             (long "module"
+               <> short 'm'
+               <> metavar "MODULE"
+               <> help "The module you want run"))
+        <*> optional (strOption
              (long "show-iface"
                <> metavar "FILE"
                <> help "same as `ghc --show-iface`" ))

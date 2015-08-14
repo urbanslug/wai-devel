@@ -7,6 +7,9 @@ Maintainer  : njagi@urbanslug.com
 Stability   : experimental
 Portability : POSIX
 -}
+
+-- {-# LANGUAGE OverloadedStrings #-}
+
 module Devel.Build (build) where
 
 import Devel.Watch
@@ -22,13 +25,14 @@ import IdeSession
 import qualified Data.ByteString.Char8 as S8
 
 import Control.Concurrent (threadDelay)
+import Data.Text (unpack)
 
 -- | Compiles and runs your WAI application.
-build :: Bool -> SessionConfig -> IO ()
-build reverseProxy' config = do
+build :: FilePath -> String ->  Bool -> SessionConfig -> IO ()
+build buildFile runFunction reverseProxy' config = do
 
   -- Either an ideBackend session or a list of errors from `build`.
-  eitherSession <- compile config 
+  eitherSession <- compile buildFile config 
 
   -- Create a new socket each time.
   sock <- createSocket
@@ -47,12 +51,13 @@ build reverseProxy' config = do
       close sock
 
       -- Restart the whole process.
-      restart reverseProxy' config
+      restart buildFile runFunction reverseProxy' config
 
     Right session -> do
       --  Run the WAI application in a separate thread.
-      (runActionsRunResult, threadId) <- run session sock reverseProxy'
-      
+      (runActionsRunResult, threadId) <-
+        run buildFile runFunction session sock reverseProxy'
+
       -- For watching for file changes in current working directory.
       isDirty <- newTVarIO False
 
@@ -64,15 +69,18 @@ build reverseProxy' config = do
 
       stopApp runActionsRunResult threadId sock
        
-      restart reverseProxy' config
+      restart buildFile runFunction reverseProxy' config
 
 
 -- | Invoked when we are ready to run the compiled code.
-run :: IdeSession -> Socket -> Bool -> IO (RunActions RunResult, ThreadId)
-run session sock reverseProxy' = do
-
+run :: FilePath -> String ->  IdeSession -> Socket -> Bool -> IO (RunActions RunResult, ThreadId)
+run buildFile runFunction session sock reverseProxy' = do
+  mapFunction <- getFileMap session
+  buildModule <- case mapFunction buildFile of
+                   Nothing -> fail "The file's module name couldn't be found"
+                   Just moduleId -> return $ unpack $ moduleName moduleId
   -- Run the given ide-backend session.
-  runActionsRunResult <- runStmt session "Application" "develMain"
+  runActionsRunResult <- runStmt session buildModule runFunction
 
   threadId  <- forkIO $ loop runActionsRunResult
   
@@ -89,10 +97,10 @@ run session sock reverseProxy' = do
 -- | Restart the whole process.
 -- Like calling main in Main but first notifies that
 -- it's about to restart.
-restart :: Bool -> SessionConfig -> IO ()
-restart reverseProxy' config = do
+restart :: FilePath -> String ->  Bool -> SessionConfig -> IO ()
+restart buildFile runFunction reverseProxy' config = do
   putStrLn "\n\nRestarting...\n\n"
-  build reverseProxy' config
+  build buildFile runFunction reverseProxy' config
 
 -- | Stop the currently running WAI application.
 stopApp :: RunActions RunResult -> ThreadId -> Socket -> IO ()
