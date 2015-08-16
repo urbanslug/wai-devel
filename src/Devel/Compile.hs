@@ -25,10 +25,11 @@ import Data.Text (unpack)
 import Distribution.PackageDescription
 import Distribution.PackageDescription.Parse
 import Distribution.PackageDescription.Configuration
+import Distribution.Verbosity
 import Devel.Types
 
 import Control.Monad (forM)
-import System.Directory (doesDirectoryExist, doesFileExist, getDirectoryContents)
+import System.Directory (doesDirectoryExist, getDirectoryContents)
 import System.FilePath ((</>))
 import Data.Monoid ((<>))
 import System.FilePath.Glob (glob)
@@ -88,7 +89,7 @@ prettyPrintErrors (x: xs) =
 
 -- | Parse the cabal file to extract the cabal extensions in use.
 extractExtensions :: IO [String]
-extractExtensions = do
+extractExtensions = do 
               list <- glob "*cabal"
               cabalFilePath <- case list of
                                  [] -> fail "No cabal file."
@@ -108,15 +109,3 @@ extractExtensions = do
               listOfExtensions <- return $ map sanitize $ map show allExt
               return $ map ((++) "-X") listOfExtensions
 
-
-getRecursiveContents :: FilePath -> IO [FilePath]
-getRecursiveContents topdir = do
-  names <- getDirectoryContents topdir
-  let properNames = filter (`notElem` [".", ".."]) names
-  paths <- forM properNames $ \name -> do
-    let path = topdir </> name
-    isDirectory <- doesDirectoryExist path
-    if isDirectory
-      then getRecursiveContents path
-      else return [path]
-  return (concat paths)

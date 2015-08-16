@@ -36,7 +36,7 @@ watch isDirty = do
   _ <- treeExtAny manager "." "lhs"      (\_ -> atomically $ writeTVar isDirty True)
   _ <- treeExtAny manager "." "yaml"    (\_ -> atomically $ writeTVar isDirty True)
 
-  forever $ threadDelay maxBound
+  _ <- forever $ threadDelay maxBound
   stopManager manager
 
 checkForChange :: TVar Bool -> IO ()

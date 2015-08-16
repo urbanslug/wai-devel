@@ -8,7 +8,7 @@ Stability   : experimental
 Portability : POSIX
 -}
 
--- {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module Devel.Build (build) where
 
@@ -22,6 +22,8 @@ import Network.Socket
 
 -- For use within `loop`
 import IdeSession
+import IdeSession.Query
+import IdeSession.State
 import qualified Data.ByteString.Char8 as S8
 
 import Control.Concurrent (threadDelay)
@@ -70,7 +72,6 @@ build buildFile runFunction reverseProxy' config = do
       stopApp runActionsRunResult threadId sock
        
       restart buildFile runFunction reverseProxy' config
-
 
 -- | Invoked when we are ready to run the compiled code.
 run :: FilePath -> String ->  IdeSession -> Socket -> Bool -> IO (RunActions RunResult, ThreadId)

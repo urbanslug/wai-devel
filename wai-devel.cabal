@@ -53,6 +53,7 @@ library
                      , Devel.ReverseProxy
                      , Devel.Args
                      , Devel.Types
+                     , Devel.Modules
   -- other-extensions:
   build-depends:       base ==4.*
                      , Glob >= 0.7
