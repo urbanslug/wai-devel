@@ -22,14 +22,12 @@ import Control.Exception
 import Text.Hamlet (shamletFile)
 import Text.Blaze.Html.Renderer.Utf8 (renderHtmlBuilder)
 
--- import IdeSession (SourceError, errorMsg)
--- import Data.Text (unpack)
-import Network.Socket
+import System.Environment (lookupEnv)
 
+import Network.Socket
+import Data.Streaming.Network
 import Devel.Types
 
-import System.Environment (lookupEnv)
-import Data.ByteString.Char8 (pack, ByteString)
 
 -- | run the warp server
 runServer :: [SourceError'] -> Socket -> IO ()
@@ -38,19 +36,13 @@ runServer errorList sock = do
   runSettingsSocket defaultSettings sock app 
 
 
--- | Does reverse proxying to localhost:3001
+-- | Does reverse proxying to localhost given port
 reverseProxy :: [SourceError'] -> IO Application
 reverseProxy errorList = do
-
-  port' <- lookupEnv "wai_port"
-  host' <- lookupEnv "wai_host"
-  
-  port <- case port' of
-            Just port'' -> return (read port'' :: Int)
-            _         -> return (3001 :: Int)
-  host <- case host' of
-            Just host'' -> return (pack host'' :: ByteString)
-            _         -> return (pack "127.0.0.1" :: ByteString)
+  mPort <- lookupEnv "PORT"
+  let port = case mPort of
+               Just p -> p
+               _ -> "3000"
 
   mgr <- newManager defaultManagerSettings
   errorList' <- return errorList
@@ -62,22 +54,27 @@ reverseProxy errorList = do
         [("content-type", "text/html; charset=utf-8")]
         (renderHtmlBuilder $(shamletFile "error.hamlet"))
   return $ waiProxyTo
-         (const $ return $ WPRProxyDest $ ProxyDest host port)
+         (const $ return $ WPRProxyDest $ ProxyDest "127.0.0.1" (read port :: Int))
          error500
          mgr
 
 -- | Create the socket that we will use to communicate with
 -- localhost:3000 here.
-createSocket :: IO Socket
-createSocket = do
-
-  sock <- socket AF_INET Stream defaultProtocol
+createSocket :: Int -> IO Socket
+createSocket port = do
+  sock <- bindPortTCP port "*4"
 
   -- Tell the OS *not* to reserve the socket after your program exits.
   setSocketOption sock ReuseAddr 1
 
-  -- Bind the socket to localhost:3000 and listen.
-  -- I wonder why I can't specify localhost instead of iNADDR_ANY
-  bindSocket sock (SockAddrInet 3000 iNADDR_ANY)
-  listen sock 2
   return sock
+
+-- Check whether a port is available to bind to.
+checkPort :: Int -> IO Bool
+checkPort port = do
+    es <- try $ bindPortTCP port "*4"
+    case es of
+        Left (_ :: IOException) -> return False
+        Right s -> do
+            sClose s
+            return True

@@ -20,20 +20,20 @@ module Devel.Compile (compile) where
 import Distribution.PackageDescription
 import Distribution.PackageDescription.Parse
 import Distribution.PackageDescription.Configuration
+import Language.Haskell.Extension
 
 -- Used internally for showing errors.
 import Data.Text (unpack)
 
 import Data.Monoid ((<>))
-import System.FilePath.Glob (glob)
+-- import System.FilePath.Glob (glob)
 import System.Directory (createDirectoryIfMissing, getCurrentDirectory)
-import Control.Monad (join)
+-- import Control.Monad (join)
 
 import IdeSession
-import Devel.Types
 import Devel.Modules
 import Devel.Paths
-
+import Devel.Types
 
 compile :: FilePath -> SessionConfig -> IO (Either [SourceError'] IdeSession)
 compile buildFile config = do
@@ -93,11 +93,8 @@ prettyPrintErrors (x: xs) =
 
 -- | Parse the cabal file to extract the cabal extensions in use.
 extractExtensions :: IO [String]
-extractExtensions = do 
-              list <- glob "*cabal"
-              cabalFilePath <- case list of
-                                 [] -> fail "No cabal file."
-                                 (x:_) -> return x
+extractExtensions = do               
+              cabalFilePath <- getCabalFile
               cabalFile <- readFile cabalFilePath
 
               let unsafePackageDescription = parsePackageDescription cabalFile
@@ -109,6 +106,11 @@ extractExtensions = do
                   packDescription = flattenPackageDescription genericPackageDescription
                   sanitize = last . words
 
-              allExt <- return $ usedExtensions $ head $ allBuildInfo packDescription
-              listOfExtensions <- return $ map sanitize $ map show allExt
-              return $ map ((++) "-X") listOfExtensions
+              rawExt <- return $ usedExtensions $ head $ allBuildInfo packDescription
+              let parseExtension :: Extension -> String
+                  parseExtension (EnableExtension extension) =  "-X" ++ (show extension)
+                  parseExtension (DisableExtension extension) = "-XNo" ++ (show extension)
+                  parseExtension (UnknownExtension extension) = "-X" ++ (show extension)
+
+                  extensions = map parseExtension rawExt
+              return extensions

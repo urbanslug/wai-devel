@@ -17,7 +17,7 @@ module Devel.Paths where
 
 import System.Directory (getCurrentDirectory, doesDirectoryExist, getDirectoryContents)
 import Control.Monad (forM)
-import System.FilePath.Glob (glob)
+import System.FilePath.Glob
 import System.FilePath ((</>))
 import Data.List
 import Devel.Modules
@@ -45,7 +45,18 @@ getFilesToWatch session = do
         | x == pathSeparator = fp
         | otherwise = dir ++ [pathSeparator] ++ fp
       thDeps = map makePathsAbsolute mixedThDeps
-  return $ srcPaths ++ thDeps 
+  
+  -- Add the cabal file path to paths to watch for.
+  cabalFile <- getCabalFile
+
+  return $ cabalFile : srcPaths ++ thDeps 
+
+getCabalFile :: IO FilePath
+getCabalFile = do
+  list <- glob "*cabal"
+  case list of
+    [] -> fail "No cabal file."
+    (cabalFile:_) -> return cabalFile
 
 parseHi :: FilePath -> IO [FilePath]
 parseHi path = do

@@ -16,7 +16,7 @@ testWatch :: Test
 testWatch = TestCase $ do
   isDirty <- newTVarIO False
   writeFile "modify.txt" "New file."
-  threadId <- forkIO $ watch isDirty
+  threadId <- forkIO $ watch isDirty ["modify.txt"]
   appendFile "modify.txt" "\n\nFile Modified."
   isDirty' <- atomically $ readTVar isDirty
   _ <- killThread threadId

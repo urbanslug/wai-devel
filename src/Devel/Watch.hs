@@ -44,22 +44,7 @@ watch isDirty pathsToWatch = do
                   atomically $ writeTVar isDirty isModified)
   forever $ threadDelay maxBound
   stopManager manager
-{-
-withManager $ \mgr -> 
-watchTree mgr "/home/urbanslug/src/haskell/web/squid" (const True) (\even -> do print $ toText $ eventPath even
-                                                         atomically $ writeTVar isDirty True )
 
-forever $ threadDelay maxBound
-  where isFileInList :: Event -> Bool -- An action predicate.
-        isFileInList event =
-          let fp = case toText (eventPath event) of 
-                     Right path -> path
-                     Left err -> "fail"
-              files = map pack pathsToWatch
-          in case any (== fp) files of
-               True -> True
-               _    -> False
--}
 -- | Runs in the current working directory 
 -- Watches for file changes for the specified file extenstions
 -- When a change is found. It modifies isDirty to True.
