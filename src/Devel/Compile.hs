@@ -15,24 +15,24 @@ Either a list of source errors or an ide-backend session.
 
 module Devel.Compile (compile) where
 
-import IdeSession
-
--- Used internally for showing errors.
-import Data.Text (unpack)
-
 -- From Cabal-ide-backend
 -- for parsing the cabal file and extracting lang extensions used.
 import Distribution.PackageDescription
 import Distribution.PackageDescription.Parse
 import Distribution.PackageDescription.Configuration
-import Distribution.Verbosity
-import Devel.Types
 
-import Control.Monad (forM)
-import System.Directory (doesDirectoryExist, getDirectoryContents)
-import System.FilePath ((</>))
+-- Used internally for showing errors.
+import Data.Text (unpack)
+
 import Data.Monoid ((<>))
 import System.FilePath.Glob (glob)
+import System.Directory (createDirectoryIfMissing, getCurrentDirectory)
+import Control.Monad (join)
+
+import IdeSession
+import Devel.Types
+import Devel.Modules
+import Devel.Paths
 
 
 compile :: FilePath -> SessionConfig -> IO (Either [SourceError'] IdeSession)
@@ -43,12 +43,18 @@ compile buildFile config = do
              config
 
   extensionList <- extractExtensions
+  
+  -- For .dump-hi files
+  dir <- getCurrentDirectory
+  let dumpDir = (dir ++ "/.dist/dump-hi/")
+  _ <- createDirectoryIfMissing True dumpDir
+
 
   -- Description of session updates.
   let targetList = (TargetsInclude [buildFile] :: Targets)
       update = updateTargets targetList
                <> updateCodeGeneration True
-               <> updateGhcOpts (["-Wall"] ++ extensionList)
+               <> updateGhcOpts (["-ddump-hi", "-ddump-to-file", ("-dumpdir="++dumpDir)] ++ ["-Wall"] ++ extensionList)
 
   -- Actually update the session.
   updateSession session update print
@@ -60,13 +66,13 @@ compile buildFile config = do
                     [] -> return []
                     _  -> return $ prettyPrintErrors errorList'
 
+
   --  We still want to see errors and warnings on the terminal.
   mapM_ putStrLn $ prettyPrintErrors errorList'
 
   return $ case errorList of
              [] -> Right session  
              _  -> Left  errorList
-
 
 -- | Remove the warnings from [SourceError] if any.
 -- Return an empty list if there are no errors and only warnings
@@ -77,7 +83,6 @@ filterErrors (x:xs) = case errorKind x  of
              KindWarning -> filterErrors xs
              _ -> x : filterErrors xs
 
-
 prettyPrintErrors :: [SourceError] -> [SourceError']
 prettyPrintErrors [] = []
 prettyPrintErrors (x: xs) = 
@@ -85,7 +90,6 @@ prettyPrintErrors (x: xs) =
     KindWarning -> ("Warning: " ++ (show (errorSpan x)) ++ " " ++ (unpack (errorMsg x))) : prettyPrintErrors xs
     KindError   -> ("Error: " ++ (show (errorSpan x)) ++ " " ++ (unpack (errorMsg x)))  : prettyPrintErrors xs
     KindServerDied -> (show (errorKind x)) : prettyPrintErrors xs
-
 
 -- | Parse the cabal file to extract the cabal extensions in use.
 extractExtensions :: IO [String]
@@ -108,4 +112,3 @@ extractExtensions = do
               allExt <- return $ usedExtensions $ head $ allBuildInfo packDescription
               listOfExtensions <- return $ map sanitize $ map show allExt
               return $ map ((++) "-X") listOfExtensions
-

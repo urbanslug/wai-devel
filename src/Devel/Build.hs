@@ -25,9 +25,12 @@ import IdeSession
 import IdeSession.Query
 import IdeSession.State
 import qualified Data.ByteString.Char8 as S8
+import Devel.Modules
 
 import Control.Concurrent (threadDelay)
 import Data.Text (unpack)
+import Devel.Paths
+
 
 -- | Compiles and runs your WAI application.
 build :: FilePath -> String ->  Bool -> SessionConfig -> IO ()
@@ -46,7 +49,7 @@ build buildFile runFunction reverseProxy' config = do
 
       -- Listen for changes in the current working directory.
       isDirty <- newTVarIO False
-      _ <- forkIO $ watch isDirty
+      _ <- forkIO $ watchErrored isDirty
       checkForChange isDirty
 
       -- close the socket so that we may create another in the new build.
@@ -62,9 +65,18 @@ build buildFile runFunction reverseProxy' config = do
 
       -- For watching for file changes in current working directory.
       isDirty <- newTVarIO False
-
+      
+      -- List of paths to watch
+      pathsToWatch <- getFilesToWatch session
+      
       -- Watch for changes in the current working directory.
-      _ <- forkIO $ watch isDirty
+      _ <- forkIO $ watch isDirty pathsToWatch
+      print "Watching for file changes..."
+
+      -- Block until change is made then carry on with program execution.
+      checkForChange isDirty
+      stopApp runActionsRunResult threadId sock
+      restart buildFile runFunction reverseProxy' config
       
       -- Block until change is made then carry on with program execution.
       checkForChange isDirty
@@ -80,6 +92,7 @@ run buildFile runFunction session sock reverseProxy' = do
   buildModule <- case mapFunction buildFile of
                    Nothing -> fail "The file's module name couldn't be found"
                    Just moduleId -> return $ unpack $ moduleName moduleId
+
   -- Run the given ide-backend session.
   runActionsRunResult <- runStmt session buildModule runFunction
 
