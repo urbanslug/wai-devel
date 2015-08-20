@@ -10,7 +10,7 @@ Portability : POSIX
 Networking things are expected to be done here.
 -}
 {-# LANGUAGE OverloadedStrings, ScopedTypeVariables, TemplateHaskell #-}
-module Devel.ReverseProxy (runServer, createSocket) where
+module Devel.ReverseProxy (runServer, createSocket, checkPort) where
 
 import Network.Wai (Application, responseBuilder)
 import Network.HTTP.ReverseProxy (WaiProxyResponse(WPRProxyDest), ProxyDest(ProxyDest), waiProxyTo)
@@ -30,19 +30,15 @@ import Devel.Types
 
 
 -- | run the warp server
-runServer :: [SourceError'] -> Socket -> IO ()
-runServer errorList sock = do
-  app <- reverseProxy errorList
+runServer :: [SourceError'] -> Socket -> Int -> IO ()
+runServer errorList sock destPort = do
+  app <- reverseProxy errorList destPort
   runSettingsSocket defaultSettings sock app 
 
 
 -- | Does reverse proxying to localhost given port
-reverseProxy :: [SourceError'] -> IO Application
-reverseProxy errorList = do
-  mPort <- lookupEnv "PORT"
-  let port = case mPort of
-               Just p -> p
-               _ -> "3000"
+reverseProxy :: [SourceError'] -> Int -> IO Application
+reverseProxy errorList destPort = do
 
   mgr <- newManager defaultManagerSettings
   errorList' <- return errorList
@@ -54,7 +50,7 @@ reverseProxy errorList = do
         [("content-type", "text/html; charset=utf-8")]
         (renderHtmlBuilder $(shamletFile "error.hamlet"))
   return $ waiProxyTo
-         (const $ return $ WPRProxyDest $ ProxyDest "127.0.0.1" (read port :: Int))
+         (const $ return $ WPRProxyDest $ ProxyDest "127.0.0.1" destPort)
          error500
          mgr
 

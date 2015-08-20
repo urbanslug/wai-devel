@@ -15,6 +15,7 @@ import Options.Applicative
 import System.Process (rawSystem)
 import System.Exit (ExitCode(ExitSuccess))
 
+import System.Environment (setEnv)
 
 main :: IO ()
 main = do
@@ -33,8 +34,9 @@ main = do
                                Just module' -> module'
                                _ -> "develMain"
 
-  buildAndRun buildFile' runFunction' reverseProxy'
+  -- _ <- setEnv "PORT" "4002"
 
+  buildAndRun buildFile' runFunction' reverseProxy'
   where opts :: ParserInfo CmdArgs
         opts = info (helper <*> cmdArgs)
                 (fullDesc
