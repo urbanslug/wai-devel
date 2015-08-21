@@ -53,7 +53,7 @@ compile buildFile config = do
   let targetList = (TargetsInclude [buildFile] :: Targets)
       update = updateTargets targetList
                <> updateCodeGeneration True
-               <> updateGhcOpts (["-ddump-hi", "-ddump-to-file", ("-dumpdir "++dumpDir)] ++ ["-Wall", "--make", "-O2"] ++ extensionList)
+               <> updateGhcOpts (["-ddump-hi", "-ddump-to-file", ("-dumpdir "++dumpDir)] ++ ["-Wall"] ++ extensionList)
 
   -- Actually update the session.
   updateSession session update print
