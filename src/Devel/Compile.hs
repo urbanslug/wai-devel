@@ -62,9 +62,9 @@ compile buildFile config = do
   -- Custom error showing.
   errorList' <- getSourceErrors session
 
-  errorList  <- case filterErrors errorList' of
-                    [] -> return []
-                    _  -> return $ prettyPrintErrors errorList'
+  let errorList = case filterErrors errorList' of
+                    [] -> []
+                    _  -> prettyPrintErrors errorList'
 
 
   --  We still want to see errors and warnings on the terminal.

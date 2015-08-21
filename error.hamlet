@@ -39,5 +39,5 @@ $doctype 5
     <div id="header">
       <p>Build error(s).
     <div id="wrap">
-      $forall elem <- errorList'
+      $forall elem <- errorList
         <li>#{elem}

@@ -13,21 +13,16 @@ Portability : POSIX
 module Devel.Build (build) where
 
 import IdeSession hiding (getEnv)
--- import IdeSession.Query hiding (getEnv)
--- import IdeSession.State
 import qualified Data.ByteString.Char8 as S8
 
 import Control.Concurrent (forkIO, killThread, ThreadId)
 import Control.Concurrent.STM.TVar
 import Network.Socket
-
--- import System.Environment (lookupEnv)
 import Control.Concurrent (threadDelay)
 import Data.Text (unpack)
--- import System.Process (runCommand)
+
 
 import Devel.Paths
--- import Devel.Modules
 import Devel.Watch
 import Devel.Compile (compile)
 import Devel.ReverseProxy
@@ -40,11 +35,10 @@ build buildFile runFunction reverseProxy' config (srcPort, destPort) = do
   -- Either an ideBackend session or a list of errors from `build`.
   eitherSession <- compile buildFile config
 
+  sock <- createSocket srcPort
+  
   case eitherSession of
     Left  errorList -> do
-
-      sock <- createSocket srcPort
-
       -- Start the warp server if the TVar is True.
       _ <- forkIO $ runServer errorList sock destPort
       putStrLn $ "Errors at http://localhost:"++(show srcPort)
@@ -61,8 +55,6 @@ build buildFile runFunction reverseProxy' config (srcPort, destPort) = do
       restart buildFile runFunction reverseProxy' config (srcPort, destPort)
 
     Right session -> do
-      
-      sock <- createSocket srcPort
 
       --  Run the WAI application in a separate thread.
       (runActionsRunResult, threadId) <-

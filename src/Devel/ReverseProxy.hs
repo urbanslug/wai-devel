@@ -36,15 +36,13 @@ runServer errorList sock destPort = do
 
 -- | Does reverse proxying to localhost given port
 reverseProxy :: [SourceError'] -> Int -> IO Application
-reverseProxy errorList destPort = do
-
+reverseProxy errorList' destPort = do
   mgr <- newManager defaultManagerSettings
-  errorList' <- return errorList
 
   let error500 :: SomeException -> Application
       error500 _ _ respond = respond $
         responseBuilder
-        status502
+        status503
         [("content-type", "text/html; charset=utf-8")]
         (renderHtmlBuilder $(shamletFile "error.hamlet"))
 
