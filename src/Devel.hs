@@ -28,12 +28,11 @@ buildAndRun buildFile runFunction reverseProxy = do
   destPort <- cyclePorts srcPort
 
   case reverseProxy of
-    True -> setEnv "PORT" (show destPort)
+    True  -> setEnv "PORT" (show destPort)
     False -> setEnv "PORT" (show srcPort)
 
-  case reverseProxy of
-    True -> build buildFile runFunction reverseProxy config (srcPort, destPort)
-    False -> build buildFile runFunction reverseProxy config (destPort, srcPort)
+  build buildFile runFunction reverseProxy config (srcPort, destPort)
+
 
 cyclePorts :: Int -> IO Int
 cyclePorts p = do

@@ -22,8 +22,6 @@ import Control.Exception
 import Text.Hamlet (shamletFile)
 import Text.Blaze.Html.Renderer.Utf8 (renderHtmlBuilder)
 
-import System.Environment (lookupEnv)
-
 import Network.Socket
 import Data.Streaming.Network
 import Devel.Types
@@ -33,7 +31,7 @@ import Devel.Types
 runServer :: [SourceError'] -> Socket -> Int -> IO ()
 runServer errorList sock destPort = do
   app <- reverseProxy errorList destPort
-  runSettingsSocket defaultSettings sock app 
+  runSettingsSocket defaultSettings sock app
 
 
 -- | Does reverse proxying to localhost given port
@@ -49,10 +47,12 @@ reverseProxy errorList destPort = do
         status502
         [("content-type", "text/html; charset=utf-8")]
         (renderHtmlBuilder $(shamletFile "error.hamlet"))
+
   return $ waiProxyTo
          (const $ return $ WPRProxyDest $ ProxyDest "127.0.0.1" destPort)
          error500
          mgr
+
 
 -- | Create the socket that we will use to communicate with
 -- localhost:3000 here.
@@ -64,6 +64,7 @@ createSocket port = do
   setSocketOption sock ReuseAddr 1
 
   return sock
+
 
 -- Check whether a port is available to bind to.
 checkPort :: Int -> IO Bool

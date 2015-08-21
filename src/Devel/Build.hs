@@ -40,12 +40,13 @@ build buildFile runFunction reverseProxy' config (srcPort, destPort) = do
   -- Either an ideBackend session or a list of errors from `build`.
   eitherSession <- compile buildFile config
 
-  sock <- createSocket srcPort
-
   case eitherSession of
     Left  errorList -> do
+
+      sock <- createSocket srcPort
+
       -- Start the warp server if the TVar is True.
-      _ <- forkIO $ runServer errorList sock srcPort
+      _ <- forkIO $ runServer errorList sock destPort
       putStrLn $ "Errors at http://localhost:"++(show srcPort)
 
       -- Listen for changes in the current working directory.
@@ -60,10 +61,12 @@ build buildFile runFunction reverseProxy' config (srcPort, destPort) = do
       restart buildFile runFunction reverseProxy' config (srcPort, destPort)
 
     Right session -> do
+      
+      sock <- createSocket srcPort
 
       --  Run the WAI application in a separate thread.
       (runActionsRunResult, threadId) <-
-        run buildFile runFunction session sock destPort reverseProxy'
+        run buildFile runFunction session sock (srcPort, destPort) reverseProxy'
 
       -- For watching for file changes in current working directory.
       isDirty <- newTVarIO False
@@ -80,8 +83,12 @@ build buildFile runFunction reverseProxy' config (srcPort, destPort) = do
       restart buildFile runFunction reverseProxy' config (srcPort, destPort)
 
 -- | Invoked when we are ready to run the compiled code.
-run :: FilePath -> String ->  IdeSession -> Socket -> Int -> Bool -> IO (RunActions RunResult, ThreadId)
-run buildFile runFunction session sock destPort reverseProxy' = do
+run :: FilePath -> String ->  IdeSession -> Socket -> (Int, Int) -> Bool -> IO (RunActions RunResult, ThreadId)
+run buildFile runFunction session sock (srcPort, destPort) reverseProxy' = do
+  case reverseProxy' of
+      False -> close sock
+      True  -> return ()
+
   mapFunction <- getFileMap session
   buildModule <- case mapFunction buildFile of
                    Nothing -> fail "The file's module name couldn't be found"
@@ -91,12 +98,12 @@ run buildFile runFunction session sock destPort reverseProxy' = do
   runActionsRunResult <- runStmt session buildModule runFunction
 
   threadId  <- forkIO $ loop runActionsRunResult
-  
+
   _ <- threadDelay 1000
-  
+
   case reverseProxy' of
-      False -> putStrLn "Project built. Preparing to start devel server without reverse proxy"
-      True -> do putStrLn $ "Project built. Preparing to start devel server..."
+      False -> putStrLn $ "Starting development server without reverse proxing http://localhost:"++(show srcPort)
+      True -> do putStrLn $ "Starting development server at http://localhost:"++(show srcPort)
                  _ <- forkIO $ runServer [] sock destPort
                  return ()
 
@@ -105,7 +112,7 @@ run buildFile runFunction session sock destPort reverseProxy' = do
 -- | Restart the whole process.
 -- Like calling main in Main but first notifies that
 -- it's about to restart.
-restart :: FilePath -> String ->  Bool -> SessionConfig -> (Int, Int) -> IO ()
+restart :: FilePath -> String -> Bool -> SessionConfig -> (Int, Int) -> IO ()
 restart buildFile runFunction reverseProxy' config portPair = do
   putStrLn "\nRestarting...\n"
   build buildFile runFunction reverseProxy' config portPair
@@ -115,6 +122,7 @@ stopApp :: RunActions RunResult -> ThreadId -> Socket -> IO ()
 stopApp runResult threadId sock = do
   interrupt runResult
   killThread threadId
+  close sock
 
 -- | Run for as long as we need to.
 loop :: RunActions RunResult -> IO ()
