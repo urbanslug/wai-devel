@@ -31,7 +31,6 @@ import System.Directory (createDirectoryIfMissing, getCurrentDirectory)
 -- import Control.Monad (join)
 
 import IdeSession
-import Devel.Modules
 import Devel.Paths
 import Devel.Types
 
@@ -104,7 +103,6 @@ extractExtensions = do
                                             _           -> error "failed package description."
 
                   packDescription = flattenPackageDescription genericPackageDescription
-                  sanitize = last . words
 
               rawExt <- return $ usedExtensions $ head $ allBuildInfo packDescription
               let parseExtension :: Extension -> String

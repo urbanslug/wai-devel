@@ -10,22 +10,24 @@ Portability : POSIX
 Actually checks only for modified files.
 Added or removed files don't trigger new builds.
 -}
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE OverloadedStrings, CPP #-}
 module Devel.Watch where
 
 import Control.Monad.STM
 import Control.Concurrent.STM.TVar
 
--- import System.FSNotify.Devel
 import System.FSNotify
 import System.FSNotify.Devel
 import Control.Monad      (forever)
 import Control.Concurrent (threadDelay)
-import qualified Filesystem.Path as FS -- (directory, filename)
-import System.FilePath.Posix (takeFileName)
 
-import Data.Text (pack, unpack)
+# if __GLASGOW_HASKELL__ < 710
+import qualified Filesystem.Path as FS
+import System.FilePath.Posix (takeFileName)
+import System.FSNotify.Devel
+import Data.Text (unpack, pack)
 import Filesystem.Path.CurrentOS (toText)
+#endif
 
 -- | Runs in the current working directory 
 -- Watches for file changes for the specified file extenstions
@@ -33,16 +35,29 @@ import Filesystem.Path.CurrentOS (toText)
 watch :: TVar Bool -> [FilePath] -> IO ()
 watch isDirty pathsToWatch = do
   manager <- startManagerConf defaultConfig
-  watchTree
-    manager 
-    "." 
-    (const True)
-    (\event -> do pathMod <- case toText $ eventPath event of
-                               Right text -> return $ unpack text -- Gives an abs path
-                               Left text -> fail $ unpack text
-                  isModified <- return (any (== pathMod) pathsToWatch)
-                  atomically $ writeTVar isDirty isModified)
-  forever $ threadDelay maxBound
+  _ <- watchTree
+         manager 
+         "." 
+         (const True)
+
+# if __GLASGOW_HASKELL__ >= 710
+         (\event -> do
+            let pathMod :: Event -> FilePath
+                pathMod (Added path _) = path
+                pathMod (Modified path _) = path
+                pathMod (Removed path _) = path
+            isModified <- return (any (== pathMod event) pathsToWatch)
+            atomically $ writeTVar isDirty isModified)    
+         
+#else
+         (\event -> do 
+            pathMod <- case toText $ eventPath event of
+                           Right text -> return $ unpack text -- Gives an abs path
+                           Left text -> fail $ unpack text
+            isModified <- return (any (== pathMod) pathsToWatch)
+            atomically $ writeTVar isDirty isModified)
+#endif
+  _ <- forever $ threadDelay maxBound
   stopManager manager
 
 -- | Runs in the current working directory 
@@ -60,7 +75,7 @@ watchErrored isDirty = do
   _ <- treeExtAny manager "." "lhs"      (\_ -> atomically $ writeTVar isDirty True)
   _ <- treeExtAny manager "." "yaml"    (\_ -> atomically $ writeTVar isDirty True)
 
-  forever $ threadDelay maxBound
+  _ <- forever $ threadDelay maxBound
   stopManager manager
 
 

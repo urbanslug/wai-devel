@@ -41,7 +41,8 @@ getFilesToWatch session = do
   -- make rel paths absolute and leave the absolute ones intact
   -- mixedThDeps meaning there are both absolute and relative paths here.
   let makePathsAbsolute :: FilePath -> FilePath
-      makePathsAbsolute fp@(x:xs)
+      makePathsAbsolute [] = dir ++ [pathSeparator]
+      makePathsAbsolute fp@(x:_)
         | x == pathSeparator = fp
         | otherwise = dir ++ [pathSeparator] ++ fp
       thDeps = map makePathsAbsolute mixedThDeps
