@@ -22,10 +22,7 @@ import Control.Monad      (forever)
 import Control.Concurrent (threadDelay)
 
 # if __GLASGOW_HASKELL__ < 710
-import qualified Filesystem.Path as FS
-import System.FilePath.Posix (takeFileName)
-import System.FSNotify.Devel
-import Data.Text (unpack, pack)
+import Data.Text (unpack)
 import Filesystem.Path.CurrentOS (toText)
 #endif
 
@@ -60,7 +57,7 @@ watch isDirty pathsToWatch = do
   _ <- forever $ threadDelay maxBound
   stopManager manager
 
--- | Runs in the current working directory 
+-- | Runs in the current working directory. Watches when there's an error.
 -- Watches for file changes for the specified file extenstions
 -- When a change is found. It modifies isDirty to True.
 watchErrored :: TVar Bool -> IO ()

@@ -26,15 +26,15 @@ data CmdArgs = CmdArgs
 cmdArgs :: Parser CmdArgs
 cmdArgs = CmdArgs
         <$> optional (strOption
-             (long "file"
-               <> short 'f'
+             (long "path"
+               <> short 'p'
                <> metavar "FILEPATH"
-               <> help "The path file with the function you want to run"))
+               <> help "The file with the function you want to run"))
         <*> optional (strOption
-             (long "module"
-               <> short 'm'
-               <> metavar "MODULE"
-               <> help "The module you want run"))
+             (long "function"
+               <> short 'f'
+               <> metavar "FUNCTION"
+               <> help "The function you want run"))
         <*> optional (strOption
              (long "show-iface"
                <> metavar "FILE"

@@ -27,11 +27,11 @@ main = do
   reverseProxy' <- return $ reverseProxy cmdArgs
 
   buildFile' <- return $ case buildFile cmdArgs of
-                              Just file -> file
+                              Just path' -> path'
                               _ -> "Application.hs"
 
   runFunction' <- return $ case runFunction cmdArgs of
-                               Just module' -> module'
+                               Just function' -> function'
                                _ -> "develMain"
 
   -- _ <- setEnv "PORT" "4002"
