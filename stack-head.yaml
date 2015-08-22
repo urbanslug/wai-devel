@@ -9,4 +9,4 @@ packages:
   - ide-backend-common
   - ide-backend-server
 extra-deps: []
-resolver: lts-3.0
+resolver: nightly-2015-08-21
