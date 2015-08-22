@@ -42,10 +42,7 @@ compile buildFile config = do
              config
 
   extensionList <- extractExtensions
-  
-  -- For .dump-hi files
-  dir <- getCurrentDirectory
-  let dumpDir = (dir ++ "/.dist/dump-hi/")
+  let dumpDir = ".dist/dump-hi"
   _ <- createDirectoryIfMissing True dumpDir
 
 

@@ -9,8 +9,9 @@ Set the environment variable `GHC_PACKAGE_PATH`
 
 ### Issue
 
-I have recieved a report from @haBuu that he has to run `stack exec wai-devel` in order to run wai-devel.
+- I have recieved a report from @haBuu that he has to run `stack exec wai-devel` in order to run wai-devel.
 I can't replicate this problem currently but any issues you might have running wai-devel might be solved by running it via stack exec as shown above.
+- Having an issue with ide-backend not using the ghc option `-dumpdir dir` so your project directory gets littered with .dump-hi files.
 
 ### Coming next
 
