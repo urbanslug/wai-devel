@@ -1,11 +1,10 @@
-language: haskell
+# NB: don't set `language: haskell` here
 
 branches:
   only:
     - master
 
 sudo: false
-
 
 before_install:
   # stack
@@ -41,6 +40,7 @@ matrix:
         - ghc-head
   allow_failures:
     - env: GHCVER=head STACK_YAML=stack-head.yaml
+    - env: GHCVER=7.10.2 STACK_YAML=stack-7.10.yaml #Fails to test only snapshot.
 
 before_install:
   # ghc
@@ -53,7 +53,7 @@ before_install:
 
 install:
   - ./travis_long stack --no-terminal --skip-ghc-check setup
-  # - ./travis_long stack --no-terminal --skip-ghc-check test --only-snapshot
+  - ./travis_long stack --no-terminal --skip-ghc-check test --only-snapshot
 
 script:
   - stack --no-terminal --skip-ghc-check build wai-devel
