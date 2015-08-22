@@ -1,6 +1,6 @@
 {-|
-Module      : Devel.Modules
-Description : For handling modules and Filepath matters.
+Module      : Devel.Paths
+Description : For filepath related matters.
 Copyright   : (c)
 License     : GPL-3
 Maintainer  : njagi@urbanslug.com
@@ -17,15 +17,17 @@ module Devel.Paths where
 
 import System.Directory (getCurrentDirectory, doesDirectoryExist, getDirectoryContents)
 import Control.Monad (forM)
+import Control.Concurrent (forkIO)
 import System.FilePath.Glob
 import System.FilePath ((</>))
 import Data.List
 import Devel.Modules
-import System.FilePath.Posix (replaceExtension, dropExtension)
+import System.FilePath.Posix (replaceExtension, dropExtension, takeExtensions)
 import IdeSession
 import qualified Data.ByteString.Char8 as C8
 import Control.Monad.IO.Class
 import System.FilePath (pathSeparator)
+import System.Directory (removeFile)
 
 
 getFilesToWatch :: IdeSession -> IO [FilePath]
@@ -49,7 +51,8 @@ getFilesToWatch session = do
   
   -- Add the cabal file path to paths to watch for.
   cabalFile <- getCabalFile
-
+  -- Clean up after GHC
+  _ <- forkIO $ delitter
   return $ cabalFile : srcPaths ++ thDeps 
 
 getCabalFile :: IO FilePath
@@ -87,8 +90,8 @@ getPathsForCompiledFiles session = do
 -- getManagedFiles
 getManagedFiles' :: IO [FilePath]
 getManagedFiles' =  do
-  dir <- getCurrentDirectory
-  getRecursiveContents dir
+  cwd <- getCurrentDirectory
+  getRecursiveContents cwd
 
 -- | Get the files that actually exist in the given dir.
 -- In this case it's called with the source dirs
@@ -121,3 +124,49 @@ getRecursiveContents topdir = do
      then getRecursiveContents path
      else return $ [path] \\ (concat x)
   return (concat paths)
+
+-- Clean up after ghc -ddump-hi -ddump-to-file
+delitter :: IO ()
+delitter = do
+  cwd <- getCurrentDirectory
+  litter <- getLitter cwd
+  mapM_ del litter
+
+  where getLitter :: FilePath -> IO [FilePath]
+        getLitter topdir = do
+          names <- getDirectoryContents topdir
+
+          -- We want to leave these files out of the list
+          let patterns = [ (compile "*.*~")
+                         , (compile "*.hs")
+                         , (compile "*.txt")
+                         , (compile "*.o")
+                         , (compile "*.img")
+                         , (compile "*.ico")
+                         , (compile "*.so")
+                         , (compile "*.conf")
+                         , (compile "*.h")
+                         , (compile "*.a")
+                         , (compile "*.lhs")
+                         , (compile "*.inplace")
+                         , (compile "*.cache")
+                         , (compile "*.*.el")
+                         ]
+          (x, _) <- globDir patterns topdir
+          let properNames = filter (`notElem` [".", ".."]) names
+          paths <- forM properNames $ \name -> do
+           let path = topdir </> name
+           isDirectory <- doesDirectoryExist path
+           if isDirectory
+             then getRecursiveContents path
+             else return $ [path] \\ (concat x)
+          return (concat paths)
+        del :: FilePath -> IO ()
+        del fp = do
+          case   ((takeExtensions fp) == ".dump-hi" )
+              || ((takeExtensions fp) == ".dyn_o" )
+              || ((takeExtensions fp) == ".o" )
+              || ((takeExtensions fp) == ".dyn_hi" )
+              || ((takeExtensions fp) == ".hi" ) of True  -> removeFile fp
+                                                    False -> return ()
+          

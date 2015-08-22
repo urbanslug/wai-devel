@@ -34,8 +34,6 @@ main = do
                                Just function' -> function'
                                _ -> "develMain"
 
-  -- _ <- setEnv "PORT" "4002"
-
   buildAndRun buildFile' runFunction' reverseProxy'
   where opts :: ParserInfo CmdArgs
         opts = info (helper <*> cmdArgs)

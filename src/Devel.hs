@@ -13,9 +13,15 @@ import Devel.Build (build)
 import Devel.ReverseProxy
 import IdeSession (sessionConfigFromEnv)
 import System.Environment (lookupEnv, setEnv)
+import Devel.Config (setConfig)
+
 
 buildAndRun :: FilePath -> String ->  Bool -> IO ()
 buildAndRun buildFile runFunction reverseProxy = do
+  -- set config for ide-backend to find.
+  _ <- setConfig
+  
+  -- This is for ide-backend.
   config <- sessionConfigFromEnv
   
   -- If port isn't set we assume port 3000

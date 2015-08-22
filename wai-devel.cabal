@@ -60,6 +60,7 @@ library
                      , Devel.ReverseProxy
                      , Devel.Args
                      , Devel.Types
+                     , Devel.Config
                      , Devel.Modules
 
   -- other-extensions:
