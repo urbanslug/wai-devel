@@ -10,7 +10,7 @@ Portability : POSIX
 module Devel where
 
 import Devel.Build (build)
-import Devel.ReverseProxy
+import Devel.ReverseProxy (checkPort)
 import IdeSession (sessionConfigFromEnv)
 import System.Environment (lookupEnv, setEnv)
 import Devel.Config (setConfig)

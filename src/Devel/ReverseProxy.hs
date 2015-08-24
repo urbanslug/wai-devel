@@ -1,31 +1,36 @@
 {-|
 Module      : Devel.ReverseProxy
-Description : Reverse proxyies and starts warp on localhost:3000.
+Description : Reverse proxies and starts warp on localhost:<PORT>.
 Copyright   : (c)
 License     : GPL-3
 Maintainer  : njagi@urbanslug.com
 Stability   : experimental
 Portability : POSIX
 
-Networking things are expected to be done here.
+Reverse proxying and other network realated activities.
 -}
 {-# LANGUAGE OverloadedStrings, ScopedTypeVariables, TemplateHaskell #-}
-module Devel.ReverseProxy (runServer, createSocket, checkPort) where
+module Devel.ReverseProxy 
+( runServer
+, createSocket
+, checkPort
+) where
 
 import Network.Wai (Application, responseBuilder)
 import Network.HTTP.ReverseProxy (WaiProxyResponse(WPRProxyDest), ProxyDest(ProxyDest), waiProxyTo)
 import Network.HTTP.Client (newManager, defaultManagerSettings)
-import Network.Wai.Handler.Warp
-import Network.HTTP.Types
-import Control.Exception
-
+import Network.HTTP.Types (status503)
 import Text.Hamlet (shamletFile)
 import Text.Blaze.Html.Renderer.Utf8 (renderHtmlBuilder)
 
+import Network.Wai.Handler.Warp
+import Control.Exception
+
 import Network.Socket
 import Data.Streaming.Network
-import Devel.Types
 
+-- local imports
+import Devel.Types (SourceError')
 
 -- | run the warp server
 runServer :: [SourceError'] -> Socket -> Int -> IO ()

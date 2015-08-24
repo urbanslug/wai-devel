@@ -6,8 +6,6 @@ License     : GPL-3
 Maintainer  : njagi@urbanslug.com
 Stability   : experimental
 Portability : POSIX
-
-No additional info.
 -}
 module Devel.Args where
 

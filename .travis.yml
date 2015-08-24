@@ -31,6 +31,7 @@ matrix:
         - hvr-ghc
         packages:
         - ghc-7.10.2
+        - libgmp-dev
   - env: GHCVER=head STACK_YAML=stack-head.yaml
     addons:
       apt:
@@ -38,9 +39,10 @@ matrix:
         - hvr-ghc
         packages:
         - ghc-head
+        - libgmp-dev
+
   allow_failures:
     - env: GHCVER=head STACK_YAML=stack-head.yaml
-    - env: GHCVER=7.10.2 STACK_YAML=stack-7.10.yaml #Fails to test only snapshot.
 
 before_install:
   # ghc

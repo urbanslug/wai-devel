@@ -12,7 +12,7 @@ Resolve filepaths from module names.
 
 {-# LANGUAGE PackageImports #-}
 
-module Devel.Modules where
+module Devel.Modules (getCompiledFiles) where
 
 import IdeSession
 import System.FilePath (pathSeparator)

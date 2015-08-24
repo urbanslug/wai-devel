@@ -13,21 +13,28 @@ Will hopefully be moved upstream to ide-backend.
 
 {-# LANGUAGE OverloadedStrings #-}
 
-module Devel.Paths where
+module Devel.Paths 
+( getFilesToWatch
+, getCabalFile
+) where
 
+-- local imports
+import Devel.Modules (getCompiledFiles)
+
+import IdeSession
+import System.FilePath.Glob
+
+import Data.List ((\\))
+import System.FilePath ((</>))
 import System.Directory (getCurrentDirectory, doesDirectoryExist, getDirectoryContents)
 import Control.Monad (forM)
 import Control.Concurrent (forkIO)
-import System.FilePath.Glob
-import System.FilePath ((</>))
-import Data.List
-import Devel.Modules
 import System.FilePath.Posix (replaceExtension, dropExtension, takeExtensions)
-import IdeSession
-import qualified Data.ByteString.Char8 as C8
-import Control.Monad.IO.Class
+import Control.Monad.IO.Class (liftIO)
 import System.FilePath (pathSeparator)
 import System.Directory (removeFile)
+
+import qualified Data.ByteString.Char8 as C8
 
 
 getFilesToWatch :: IdeSession -> IO [FilePath]

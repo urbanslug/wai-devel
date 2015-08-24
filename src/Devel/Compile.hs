@@ -15,6 +15,9 @@ Either a list of source errors or an ide-backend session.
 
 module Devel.Compile (compile) where
 
+-- Almost everything is dependent on ide-backend.
+import IdeSession
+
 -- From Cabal-ide-backend
 -- for parsing the cabal file and extracting lang extensions used.
 import Distribution.PackageDescription
@@ -25,12 +28,11 @@ import Language.Haskell.Extension
 -- Used internally for showing errors.
 import Data.Text (unpack)
 
+-- Utility functions
 import Data.Monoid ((<>))
--- import System.FilePath.Glob (glob)
 import System.Directory (createDirectoryIfMissing, getCurrentDirectory)
--- import Control.Monad (join)
 
-import IdeSession
+-- Local imports
 import Devel.Paths
 import Devel.Types
 
