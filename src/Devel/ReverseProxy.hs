@@ -43,7 +43,7 @@ runServer errorList sock destPort = do
 reverseProxy :: [SourceError'] -> Int -> IO Application
 reverseProxy errorList destPort = do
   mgr <- newManager defaultManagerSettings
-  errorList `seq` return ()
+
   let error500 :: SomeException -> Application
       error500 _ _ respond = respond $
         responseBuilder
