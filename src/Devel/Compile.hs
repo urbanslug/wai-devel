@@ -45,13 +45,6 @@ import Network.HTTP.Types (status200)
 import Text.Hamlet (shamletFile)
 import Text.Blaze.Html.Renderer.Utf8 (renderHtmlBuilder)
 
-import Network.Wai.Handler.Warp
-import Control.Exception
-
-import Data.Text (Text, pack)
-import Network.Wai (responseBuilder)
-import Text.Blaze.Html.Renderer.Utf8 (renderHtmlBuilder)
-import Yesod.Core.Handler
 
 compile :: FilePath -> SessionConfig -> IO (Either [SourceError'] IdeSession)
 compile buildFile config = do
@@ -72,7 +65,7 @@ compile buildFile config = do
                <> updateGhcOpts (["-ddump-hi", "-ddump-to-file", ("-dumpdir "++dumpDir)] ++ ["-Wall"] ++ extensionList)
 
   -- Actually update the session.
-  updateSession session update streamUpdateResult
+  updateSession session update print
 
   -- Custom error showing.
   errorList' <- getSourceErrors session
@@ -128,46 +121,3 @@ extractExtensions = do
 
                   extensions = map parseExtension rawExt
               return extensions
-              
-streamUpdateResult :: UpdateStatus -> IO ()
-streamUpdateResult _ = do
-  app <- (respond $ responseLBS status200 [] "Hello World")
-  run 4000 app
-{-
-streamUpdateResult :: UpdateStatus -> IO ()
-streamUpdateResult (UpdateStatusFailed text) = fail $ unpack text
-streamUpdateResult UpdateStatusRequiredRestart = fail "Requires restart"
-streamUpdateResult (UpdateStatusCrashRestart text) = fail $ "Restart. Crashed with: " ++ unpack text
-streamUpdateResult (UpdateStatusServerDied text) = fail $ "Server died: "++ unpack text
-streamUpdateResult UpdateStatusDone = print "Update done."
-streamUpdateResult (UpdateStatusProgress progress) = streamProgress progress
-  where streamProgress :: Progress -> IO ()
-        streamProgress progress = do 
-          _ <- print $ progressStep progress
-          _ <- print $ progressNumSteps progress
-          _ <- print $ unpack $ getMsgFromMaybe $ progressOrigMsg progress
-          toBrowser $ unpack $ progressText $ progressParsedMsg progress
-
-        progressText :: Maybe Text -> Text
-        progressText Nothing = "No progress text"
-        progressText (Just text) = text
-        getMsgFromMaybe :: Maybe Text -> Text
-        getMsgFromMaybe Nothing = "Original Message: Nothing."
-        getMsgFromMaybe (Just msg) = pack $ "Original Message: " ++ unpack msg
-
-toBrowser :: String -> IO ()
-toBrowser progress = do
-  mgr <- newManager defaultManagerSettings
-  let error500 :: SomeException -> Application
-      error500 _ _ respond = respond $
-        responseBuilder
-        status503
-        [("content-type", "text/html; charset=utf-8")]
-        (renderHtmlBuilder $(shamletFile "build.hamlet"))
-  app <- return $ waiProxyTo
-                   (const $ return $ WPRProxyDest $ ProxyDest "127.0.0.1" 4001)
-                   error500
-                   mgr
-  run 4000 app 
-
--}
