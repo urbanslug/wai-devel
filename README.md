@@ -31,3 +31,5 @@ This is due to differences in the build plan.
 - Provide a dashboard page with compilation status, GC stats, and other such useful meta-information.
 - Port to windows. This depends on ide-backend getting ported to Windows.
 - Proper support for cabal binary users and their sandboxes.
+
+[WAI]: http://www.yesodweb.com/book/web-application-interface
