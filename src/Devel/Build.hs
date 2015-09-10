@@ -8,113 +8,112 @@ Stability   : experimental
 Portability : POSIX
 -}
 
-{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE RecordWildCards, OverloadedStrings #-}
 
-module Devel.Build (build) where
+module Devel.Build 
+( build
+) where
 
-import IdeSession hiding (getEnv)
+
+import IdeSession -- hiding (getEnv)
 import qualified Data.ByteString.Char8 as S8
-
-import Control.Concurrent (forkIO, killThread, ThreadId)
-import Control.Concurrent.STM.TVar
-import Network.Socket
-import Control.Concurrent (threadDelay)
 import Data.Text (unpack)
 
-
 import Devel.Paths
+import Devel.Compile
+import Devel.ReverseProxy (startReverseProxy, createSocket)
+import Devel.Types
 import Devel.Watch
-import Devel.Compile (compile)
-import Devel.ReverseProxy
 
+import Network.Socket (close, Socket)
+import GHC.Conc (newTVarIO)
+import Control.Concurrent (forkIO, killThread, ThreadId)
 
--- | Compiles and runs your WAI application.
-build :: FilePath -> String ->  Bool -> SessionConfig -> (Int, Int) -> IO ()
-build buildFile runFunction reverseProxy' config (srcPort, destPort) = do
-
-  -- Either an ideBackend session or a list of errors from `build`.
-  eitherSession <- compile buildFile config
-
-  sock <- createSocket srcPort
+-- | Compiles and calls run on your WAI application.
+build :: FilePath -> String ->  Bool -> SessionConfig -> (Int, Int) -> FileChange -> IO ()
+build buildFile runFunction isReverseProxy sessionConfig (fromProxyPort, toProxyPort) fileChange = do
   
+  (session, extensionList) <- initCompile sessionConfig
+
+  case fileChange of
+    NoChange -> 
+     case isReverseProxy of
+       True -> do
+         _ <- forkIO $ startReverseProxy (fromProxyPort, toProxyPort)
+         putStrLn $ "Starting devel application at http://localhost:"++ show fromProxyPort
+       False -> putStrLn $ "Starting app without reverse proxying at http://localhost:"++ show fromProxyPort
+    _  -> return ()
+
+  
+  (session, update) <- 
+    case fileChange of
+      NoChange -> compile session extensionList buildFile
+      _        -> compile session extensionList buildFile
+
+  eitherSession <- finishCompile (session, update)
+
   case eitherSession of
-    Left  errorList -> do
-      -- Start the warp server if the TVar is True.
-      _ <- forkIO $ runServer errorList sock destPort
-      putStrLn $ "Errors at http://localhost:"++(show srcPort)
+    Left _ -> do
 
       -- Listen for changes in the current working directory.
       isDirty <- newTVarIO False
+
       _ <- forkIO $ watchErrored isDirty
-      checkForChange isDirty
 
-      -- close the socket so that we may create another in the new build.
-      close sock
+      -- Block until relevant change is made then carry on with program execution.
+      _ <- checkForChangeErrored isDirty
 
-      -- Restart the whole process.
-      restart buildFile runFunction reverseProxy' config (srcPort, destPort)
+      -- Stop the current app.
+      putStrLn "\n\nRebuilding...\n\n"
+      
+      _ <- shutdownSession session
+
+      build buildFile runFunction False sessionConfig (fromProxyPort, toProxyPort) NoChange
 
     Right session -> do
-
-      --  Run the WAI application in a separate thread.
-      (runActionsRunResult, threadId) <-
-        run buildFile runFunction session sock (srcPort, destPort) reverseProxy'
-
-      -- For watching for file changes in current working directory.
-      isDirty <- newTVarIO False
       
+      -- run the session
+      (runActionsRunResult, threadId) <- run session buildFile runFunction
+      
+      -- Start watching for file changes.
+      isDirty <- newTVarIO (False, NoChange)
+
       -- List of paths to watch
       pathsToWatch <- getFilesToWatch session
 
       -- Watch for changes in the current working directory.
       _ <- forkIO $ watch isDirty pathsToWatch
 
-      -- Block until change is made then carry on with program execution.
-      checkForChange isDirty
-      stopApp runActionsRunResult threadId sock
-      restart buildFile runFunction reverseProxy' config (srcPort, destPort)
+      -- Block until relevant change is made then carry on with program execution.
+      newFileChange <- checkForChange isDirty
 
--- | Invoked when we are ready to run the compiled code.
-run :: FilePath -> String ->  IdeSession -> Socket -> (Int, Int) -> Bool -> IO (RunActions RunResult, ThreadId)
-run buildFile runFunction session sock (srcPort, destPort) reverseProxy' = do
-  case reverseProxy' of
-      False -> close sock
-      True  -> return ()
+      -- Stop the current app.
+      stopApp runActionsRunResult threadId
+      putStrLn "\n\nRebuilding...\n\n"
+      build buildFile runFunction isReverseProxy sessionConfig (fromProxyPort, toProxyPort) newFileChange
 
+
+run :: IdeSession -> FilePath -> String -> IO (RunActions RunResult, ThreadId)
+run session buildFile runFunction = do
+
+  -- Get the module name from the file path
   mapFunction <- getFileMap session
   buildModule <- case mapFunction buildFile of
-                   Nothing -> fail "The file's module name couldn't be found"
+                   Nothing -> fail $ "The file's module name for:"++ (show buildFile) ++"couldn't be found"
                    Just moduleId -> return $ unpack $ moduleName moduleId
 
   -- Run the given ide-backend session.
   runActionsRunResult <- runStmt session buildModule runFunction
-
-  threadId  <- forkIO $ loop runActionsRunResult
-
-  _ <- threadDelay 1000
-
-  case reverseProxy' of
-      False -> putStrLn $ "Starting development server without reverse proxing http://localhost:"++(show srcPort)
-      True -> do putStrLn $ "Starting development server at http://localhost:"++(show srcPort)
-                 _ <- forkIO $ runServer [] sock destPort
-                 return ()
+  threadId <- forkIO $ loop runActionsRunResult
 
   return (runActionsRunResult, threadId)
-
--- | Restart the whole process.
--- Like calling main in Main but first notifies that
--- it's about to restart.
-restart :: FilePath -> String -> Bool -> SessionConfig -> (Int, Int) -> IO ()
-restart buildFile runFunction reverseProxy' config portPair = do
-  putStrLn "\nRestarting...\n"
-  build buildFile runFunction reverseProxy' config portPair
+  
 
 -- | Stop the currently running WAI application.
-stopApp :: RunActions RunResult -> ThreadId -> Socket -> IO ()
-stopApp runResult threadId sock = do
+stopApp :: RunActions RunResult -> ThreadId -> IO ()
+stopApp runResult threadId = do
   interrupt runResult
   killThread threadId
-  close sock
 
 -- | Run for as long as we need to.
 loop :: RunActions RunResult -> IO ()
@@ -123,3 +122,4 @@ loop res = do
   case runAction of
     Left bs -> S8.putStr bs >> loop res
     Right result -> putStrLn $ "Run result: " ++ show result
+

@@ -14,3 +14,10 @@ Either a list of source errors or an ide-backend session.
 module Devel.Types where
 
 type SourceError' = String
+type GhcExtension = String
+data FileChange = 
+    Addition     FilePath
+  | Modification FilePath
+  | Removal      FilePath
+  | NoChange
+  deriving Show

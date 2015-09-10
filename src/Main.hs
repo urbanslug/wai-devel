@@ -24,7 +24,8 @@ main = do
          Just path -> rawSystem "ghc" $ ["--show-iface "] ++ [show path]
          _         -> return ExitSuccess
 
-  reverseProxy' <- return $ reverseProxy cmdArgs
+  -- Default reverse proxying is True
+  isReverseProxy' <- return $ isReverseProxy cmdArgs
 
   buildFile' <- return $ case buildFile cmdArgs of
                               Just path' -> path'
@@ -34,7 +35,7 @@ main = do
                                Just function' -> function'
                                _ -> "develMain"
 
-  buildAndRun buildFile' runFunction' reverseProxy'
+  buildAndRun buildFile' runFunction' isReverseProxy'
   where opts :: ParserInfo CmdArgs
         opts = info (helper <*> cmdArgs)
                 (fullDesc

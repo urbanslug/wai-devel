@@ -7,58 +7,61 @@ Maintainer  : njagi@urbanslug.com
 Stability   : experimental
 Portability : POSIX
 
-Reverse proxying and other network realated activities.
+Reverse proxying and other socket realated activities.
 -}
 {-# LANGUAGE OverloadedStrings, ScopedTypeVariables, TemplateHaskell #-}
 module Devel.ReverseProxy 
-( runServer
+( startReverseProxy
 , createSocket
+, createSocketSafe
 , checkPort
+, cyclePorts
 ) where
 
-import Network.Wai (Application, responseBuilder)
 import Network.HTTP.ReverseProxy (WaiProxyResponse(WPRProxyDest), ProxyDest(ProxyDest), waiProxyTo)
 import Network.HTTP.Client (newManager, defaultManagerSettings)
-import Network.HTTP.Types (status503)
-import Text.Hamlet (shamletFile)
-import Text.Blaze.Html.Renderer.Utf8 (renderHtmlBuilder)
+import Network.HTTP.Types (status200)
 
-import Network.Wai.Handler.Warp
+import Network.Wai.Handler.Warp (runSettingsSocket, defaultSettings, run)
 import Control.Exception
 
 import Network.Socket
-import Data.Streaming.Network
+import Data.Streaming.Network (bindPortTCP)
 
--- local imports
-import Devel.Types (SourceError')
-
--- | run the warp server
-runServer :: [SourceError'] -> Socket -> Int -> IO ()
-runServer errorList sock destPort = do
-  app <- reverseProxy errorList destPort
-  runSettingsSocket defaultSettings sock app
+import qualified Data.ByteString.Lazy as LB
+import Data.FileEmbed        (embedFile)
+import Network.Wai (Application, responseLBS)
 
 
--- | Does reverse proxying to localhost given port
-reverseProxy :: [SourceError'] -> Int -> IO Application
-reverseProxy errorList destPort = do
+
+startReverseProxy :: (Int, Int) -> IO ()
+startReverseProxy  (fromProxyPort, toProxyPort) = do
   mgr <- newManager defaultManagerSettings
 
-  let error500 :: SomeException -> Application
-      error500 _ _ respond = respond $
-        responseBuilder
-        status503
-        [("content-type", "text/html; charset=utf-8")]
-        (renderHtmlBuilder $(shamletFile "error.hamlet"))
+  let onException' :: SomeException -> Application
+      onException' _ _ respond = do
+        let refreshHtml = LB.fromChunks $ return $(embedFile "refreshing.html")
+        respond $ responseLBS status200
+                              [ ("content-type", "text/html")
+                              , ("Refresh", "1")
+                              ]
+                              refreshHtml
 
-  return $ waiProxyTo
-         (const $ return $ WPRProxyDest $ ProxyDest "127.0.0.1" destPort)
-         error500
-         mgr
+  let proxyApp = waiProxyTo
+                   (\_ -> return $ WPRProxyDest $ ProxyDest "0.0.0.0" toProxyPort)
+                   onException'
+                   mgr
+
+  -- runSettingsSocket defaultSettings sock proxyApp
+  run fromProxyPort proxyApp
 
 
--- | Create the socket that we will use to communicate with
--- localhost:3000 here.
+createSocketSafe :: Int -> IO (Socket, Int)
+createSocketSafe port' = do
+  port <- cyclePorts port'
+  sock <- createSocket port
+  return (sock, port)
+
 createSocket :: Int -> IO Socket
 createSocket port = do
   sock <- bindPortTCP port "*4"
@@ -78,3 +81,11 @@ checkPort port = do
         Right s -> do
             sClose s
             return True
+
+cyclePorts :: Int -> IO Int
+cyclePorts p = do
+  let port = p + 1
+  portAvailable <- checkPort port
+  case portAvailable of
+    True -> return port
+    _ -> cyclePorts port

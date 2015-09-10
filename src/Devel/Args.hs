@@ -17,8 +17,9 @@ data CmdArgs = CmdArgs
   { interfaceFile :: Maybe FilePath
   , buildFile :: Maybe FilePath
   , runFunction :: Maybe String
+
   -- By deafult reverse proxy should be True
-  , reverseProxy :: Bool 
+  , isReverseProxy :: Bool 
   }
 
 cmdArgs :: Parser CmdArgs
@@ -27,17 +28,17 @@ cmdArgs = CmdArgs
              (long "path"
                <> short 'p'
                <> metavar "FILEPATH"
-               <> help "The file with the function you want to run"))
+               <> help "The file with the function you want to run. Default is `Application.hs`."))
         <*> optional (strOption
              (long "function"
                <> short 'f'
                <> metavar "FUNCTION"
-               <> help "The function you want run"))
+               <> help "The function you want run. Default is `develMain`."))
         <*> optional (strOption
              (long "show-iface"
                <> metavar "FILE"
-               <> help "same as `ghc --show-iface`" ))
+               <> help "literally the same as `ghc --show-iface`" ))
         <*> flag True False
-              (long "reverse-proxy"
+              (long "no-reverse-proxy"
                 <> short 'r'
                 <> help "use `-r` to disable reverse proxying." )

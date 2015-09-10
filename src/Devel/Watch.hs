@@ -21,38 +21,59 @@ import System.FSNotify.Devel
 import Control.Monad      (forever)
 import Control.Concurrent (threadDelay)
 
+import Devel.Types
+
 # if __GLASGOW_HASKELL__ < 710
 import Data.Text (unpack)
 import Filesystem.Path.CurrentOS (toText)
+import qualified Filesystem.Path as FSP
 #endif
 
--- | Runs in the current working directory 
--- Watches for file changes for the specified file extenstions
--- When a change is found. It modifies isDirty to True.
-watch :: TVar Bool -> [FilePath] -> IO ()
+-- "Smart" file watching.
+watch :: TVar (Bool, FileChange) -> [FilePath] -> IO ()
 watch isDirty pathsToWatch = do
   manager <- startManagerConf defaultConfig
-  _ <- watchTree
-         manager 
-         "." 
-         (const True)
+  _ <- watchTree manager "." (const True)
 
+-- Last argument to watchTree.
 # if __GLASGOW_HASKELL__ >= 710
          (\event -> do
-            let pathMod :: Event -> FilePath
-                pathMod (Added path _) = path
-                pathMod (Modified path _) = path
-                pathMod (Removed path _) = path
-            isModified <- return (any (== pathMod event) pathsToWatch)
-            atomically $ writeTVar isDirty isModified)    
-         
+            let pathMod :: Event -> FileChange
+                pathMod (Added path _)    = Addition path
+                pathMod (Modified path _) = Modification path
+                pathMod (Removed path _)  = Removal path
+
+                getFilePath :: FileChange -> FilePath
+                getFilePath Addition (Just path) = path
+                getFilePath Modification (Just path) = path
+                getFilePath Removal (Just path) = path
+
+                fileChange = pathMod event
+                file = getFilePath fileChange
+
+            isModified <- return (any (== file) pathsToWatch)
+            atomically $ writeTVar isDirty (isModified, fileChange))    
+
 #else
          (\event -> do 
-            pathMod <- case toText $ eventPath event of
-                           Right text -> return $ unpack text -- Gives an abs path
-                           Left text -> fail $ unpack text
-            isModified <- return (any (== pathMod) pathsToWatch)
-            atomically $ writeTVar isDirty isModified)
+            let pathMod :: Event -> FileChange
+                pathMod (Added path _)    = Addition     (getPath path)
+                pathMod (Modified path _) = Modification (getPath path)
+                pathMod (Removed path _)  = Removal      (getPath path)
+
+                getPath :: FSP.FilePath -> FilePath
+                getPath p = case toText p of
+                              Right text -> unpack text
+                              Left text -> fail $ unpack text
+
+                fileChange = pathMod event
+
+            pathMod' <- case toText $ eventPath event of
+                            Right text -> return $ unpack text -- Gives an abs path
+                            Left text -> fail $ unpack text
+            
+            isModified <- return (any (== pathMod') pathsToWatch)
+            atomically $ writeTVar isDirty (isModified, fileChange))
 #endif
   _ <- forever $ threadDelay maxBound
   stopManager manager
@@ -76,7 +97,14 @@ watchErrored isDirty = do
   stopManager manager
 
 
-checkForChange :: TVar Bool -> IO ()
+checkForChange :: TVar (Bool, FileChange) -> IO FileChange
 checkForChange isDirty = do
+  atomically $ readTVar isDirty >>= \(isDirty', _) -> check isDirty'
+  (_, fileChange) <- readTVarIO isDirty
+  atomically $ writeTVar isDirty (False, NoChange)
+  return fileChange
+
+checkForChangeErrored :: TVar Bool -> IO ()
+checkForChangeErrored isDirty = do
   atomically $ do readTVar isDirty >>= check
                   writeTVar isDirty False

@@ -7,43 +7,55 @@ Maintainer  : njagi@urbanslug.com
 Stability   : experimental
 Portability : POSIX
 -}
-module Devel where
+module Devel (buildAndRun) where
 
-import Devel.Build (build)
-import Devel.ReverseProxy (checkPort)
+-- Related to config
 import IdeSession (sessionConfigFromEnv)
 import System.Environment (lookupEnv, setEnv)
+
+-- Internal functions.
 import Devel.Config (setConfig)
+import Devel.ReverseProxy (cyclePorts)
+import Devel.Build (build)
+import Devel.Types
 
-
+-- Build and run our haskell application.
 buildAndRun :: FilePath -> String ->  Bool -> IO ()
-buildAndRun buildFile runFunction reverseProxy = do
-  -- set config for ide-backend to find.
+buildAndRun buildFile runFunction isReverseProxy = do
+
+  -- set Environment variables: GHC_PACKAGE_PATH and PATH
+  -- Needed for ide-backend to provide sessionConfig
   _ <- setConfig
   
-  -- This is for ide-backend.
-  config <- sessionConfigFromEnv
-  
-  -- If port isn't set we assume port 3000
-  mPort <- lookupEnv "PORT"
-  let srcPort = case mPort of
-                  Just p -> read p :: Int
-                  _ -> 3000
+  -- | Let ide-backend set session config now because ide-backend can't set it during rebuilds.
+  -- We then pass sessionConfig around between rebuilds
+  -- You must restart wai-devel in the terminal for it to get a new session config
+  sessionConfig <- sessionConfigFromEnv
 
-  -- Gives us a port to reverse proxy to.
-  destPort <- cyclePorts srcPort
+  -- | If port isn't set we assume port 3000
+  maybePort <- lookupEnv "PORT"
+  let fromProxyPort = case maybePort of
+                       Just port -> read port :: Int
+                       _ -> 3000
 
-  case reverseProxy of
-    True  -> setEnv "PORT" (show destPort)
-    False -> setEnv "PORT" (show srcPort)
+  -- Look for and give us a port to reverse proxy to
+  -- i.e a destination port.
+  toProxyPort <- cyclePorts fromProxyPort
 
-  build buildFile runFunction reverseProxy config (srcPort, destPort)
+  -- | Set PORT depending on whether reverse proxying is disallowed or not.
+  -- If reverse proxying is set to disabled i.e False
+  -- Then PORT variable is set to the source port i.e fromProxyPort
+  -- By default reverse proxying is True.
+  case isReverseProxy of
+    True  -> setEnv "PORT" (show toProxyPort)
+    False -> setEnv "PORT" (show fromProxyPort)
 
-
-cyclePorts :: Int -> IO Int
-cyclePorts p = do
-  let port = p + 1
-  portAvailable <- checkPort port
-  case portAvailable of
-    True -> return port
-    _ -> cyclePorts port
+  -- | We call the build function only the first time we want to build our application.
+  build
+    buildFile -- | The target file, should contain the function we wish to call.
+    runFunction -- | The function we want to call.
+    isReverseProxy -- | Use reverse proxying? Default to True. 
+    sessionConfig -- | We need this when compiling.
+    (fromProxyPort, toProxyPort) -- | The port we reverse proxy to and from.
+    -- False -- | set rebuild to false.
+    NoChange -- | File to be rebuilt.
