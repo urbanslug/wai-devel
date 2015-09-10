@@ -44,9 +44,9 @@ watch isDirty pathsToWatch = do
                 pathMod (Removed path _)  = Removal path
 
                 getFilePath :: FileChange -> FilePath
-                getFilePath Addition (Just path) = path
-                getFilePath Modification (Just path) = path
-                getFilePath Removal (Just path) = path
+                getFilePath (Addition path) = path
+                getFilePath (Modification path) = path
+                getFilePath (Removal path) = path
 
                 fileChange = pathMod event
                 file = getFilePath fileChange
