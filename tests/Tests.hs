@@ -5,4 +5,4 @@ import Tests.Watch
 import Test.HUnit.Base
 
 main :: IO Counts
-main = runTestTT $ TestList [testCheckForChange]
+main = runTestTT $ TestList []

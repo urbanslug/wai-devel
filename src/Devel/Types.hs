@@ -20,4 +20,4 @@ data FileChange =
   | Modification FilePath
   | Removal      FilePath
   | NoChange
-  deriving Show
+  deriving (Show, Eq)

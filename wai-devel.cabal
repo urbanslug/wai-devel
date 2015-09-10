@@ -19,11 +19,11 @@ library
                      , Devel.Watch
                      , Devel.Paths
                      , Devel.WebSockets
+                     , Devel.Types
   other-modules:       Devel.Build
                      , Devel.Compile
                      , Devel.ReverseProxy
                      , Devel.Args
-                     , Devel.Types
                      , Devel.Config
                      , Devel.Modules
 

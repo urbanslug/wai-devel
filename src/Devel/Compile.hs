@@ -31,7 +31,7 @@ import Distribution.PackageDescription.Configuration
 import Language.Haskell.Extension
 
 -- Used internally for showing errors.
-import Data.Text (unpack, Text)
+import Data.Text (unpack)
 
 -- Utility functions
 import Data.Monoid ((<>))
@@ -39,41 +39,9 @@ import Data.Monoid ((<>))
 -- Local imports
 import Devel.Paths
 import Devel.Types
-import Devel.ReverseProxy (checkPort)
-import Devel.WebSocket
-
--- web sockets
--- import GHC.Conc (forkIO)
-import qualified Network.WebSockets as WS
-import qualified Data.ByteString.Char8 as BS
-import Network.Socket (close, Socket)
-import Data.IORef
-
-import qualified Network.WebSockets as WS
-import Network.Socket      (withSocketsDo, accept, socket)
-import Data.IORef
-import IdeSession (UpdateStatus)
 
 -- recompile
 import System.FilePath.Posix (takeExtension)
-
--------------------------
-import Network.Wai (Application, responseBuilder, responseLBS)
-import Network.HTTP.ReverseProxy (WaiProxyResponse(WPRProxyDest), ProxyDest(ProxyDest), waiProxyTo)
-import Network.HTTP.Client (newManager, defaultManagerSettings)
-import Network.HTTP.Types (status200)
-import Text.Hamlet (shamletFile)
-import Text.Blaze.Html.Renderer.Utf8 (renderHtmlBuilder)
-
-import Network.Wai.Handler.Warp
-import Control.Exception
-
-import qualified Network.WebSockets as WS
-import qualified Network.Socket as Sock
-import Data.Streaming.Network
-import GHC.Conc
-------------------------
-
 
 -- Initialize the compilation process.
 initCompile :: SessionConfig -> IO (IdeSession, [GhcExtension])
