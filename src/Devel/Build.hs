@@ -15,46 +15,48 @@ module Devel.Build
 ) where
 
 
-import IdeSession -- hiding (getEnv)
+import IdeSession
 import qualified Data.ByteString.Char8 as S8
 import Data.Text (unpack)
 
+-- import Network.Socket (close, Socket)
+import GHC.Conc (newTVarIO)
+import Control.Concurrent (forkIO, killThread, ThreadId)
+
 import Devel.Paths
 import Devel.Compile
-import Devel.ReverseProxy (startReverseProxy, createSocket)
+import Devel.ReverseProxy (startReverseProxy)
 import Devel.Types
 import Devel.Watch
 
-import Network.Socket (close, Socket)
-import GHC.Conc (newTVarIO)
-import Control.Concurrent (forkIO, killThread, ThreadId)
+
 
 -- | Compiles and calls run on your WAI application.
 build :: FilePath -> String ->  Bool -> SessionConfig -> (Int, Int) -> FileChange -> IO ()
 build buildFile runFunction isReverseProxy sessionConfig (fromProxyPort, toProxyPort) fileChange = do
-  
-  (session, extensionList) <- initCompile sessionConfig
 
-  case fileChange of
-    NoChange -> 
-     case isReverseProxy of
-       True -> do
-         _ <- forkIO $ startReverseProxy (fromProxyPort, toProxyPort)
-         putStrLn $ "Starting devel application at http://localhost:"++ show fromProxyPort
-       False -> putStrLn $ "Starting app without reverse proxying at http://localhost:"++ show fromProxyPort
-    _  -> return ()
+  (initialSession, extensionList) <- initCompile sessionConfig
+  _ <- case fileChange of
+         NoChange -> 
+          case isReverseProxy of
+            True -> do
+              _ <- forkIO $ startReverseProxy (fromProxyPort, toProxyPort)
+              putStrLn $ "Starting devel application at http://localhost:"++ show fromProxyPort
+            False -> putStrLn $ "Starting app without reverse proxying at http://localhost:"++ show fromProxyPort
+         _  -> return ()
 
-  
-  (session, update) <- 
-    case fileChange of
-      NoChange -> compile session extensionList buildFile
-      _        -> compile session extensionList buildFile
 
-  eitherSession <- finishCompile (session, update)
+  (updatedSession, update) <- 
+     case fileChange of
+       NoChange -> compile initialSession extensionList buildFile
+       -- We can't call this with recompile yet because
+       -- ide-backend doesn't allow it.
+       _        -> compile initialSession extensionList buildFile
+
+  eitherSession <- finishCompile (updatedSession, update)
 
   case eitherSession of
     Left _ -> do
-
       -- Listen for changes in the current working directory.
       isDirty <- newTVarIO False
 
@@ -66,12 +68,11 @@ build buildFile runFunction isReverseProxy sessionConfig (fromProxyPort, toProxy
       -- Stop the current app.
       putStrLn "\n\nRebuilding...\n\n"
       
-      _ <- shutdownSession session
+      _ <- shutdownSession updatedSession
 
       build buildFile runFunction False sessionConfig (fromProxyPort, toProxyPort) NoChange
 
     Right session -> do
-      
       -- run the session
       (runActionsRunResult, threadId) <- run session buildFile runFunction
       
@@ -88,14 +89,13 @@ build buildFile runFunction isReverseProxy sessionConfig (fromProxyPort, toProxy
       newFileChange <- checkForChange isDirty
 
       -- Stop the current app.
-      stopApp runActionsRunResult threadId
+      _ <- stopApp runActionsRunResult threadId
       putStrLn "\n\nRebuilding...\n\n"
       build buildFile runFunction isReverseProxy sessionConfig (fromProxyPort, toProxyPort) newFileChange
 
 
 run :: IdeSession -> FilePath -> String -> IO (RunActions RunResult, ThreadId)
 run session buildFile runFunction = do
-
   -- Get the module name from the file path
   mapFunction <- getFileMap session
   buildModule <- case mapFunction buildFile of

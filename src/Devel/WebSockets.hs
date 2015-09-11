@@ -6,10 +6,10 @@ module Devel.WebSockets
 import qualified Data.ByteString.Char8 as BS
 
 import qualified Network.WebSockets as WS
-import Network.Socket      (withSocketsDo, accept, Socket)
+import Network.Socket      (withSocketsDo, accept ) -- Socket
 import Data.IORef
 import IdeSession (UpdateStatus)
-import GHC.Conc (forkIO)
+-- import GHC.Conc (forkIO)
 
 printWithWebSocket :: IORef (Maybe WS.Connection) -> UpdateStatus -> IO ()
 printWithWebSocket iMaybeConn status = do

@@ -22,7 +22,8 @@ import Network.HTTP.ReverseProxy (WaiProxyResponse(WPRProxyDest), ProxyDest(Prox
 import Network.HTTP.Client (newManager, defaultManagerSettings)
 import Network.HTTP.Types (status200)
 
-import Network.Wai.Handler.Warp (runSettingsSocket, defaultSettings, run)
+-- import Network.Wai.Handler.Warp (runSettingsSocket, defaultSettings, run)
+import Network.Wai.Handler.Warp (run)
 import Control.Exception
 
 import Network.Socket

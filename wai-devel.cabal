@@ -20,9 +20,9 @@ library
                      , Devel.Paths
                      , Devel.WebSockets
                      , Devel.Types
-  other-modules:       Devel.Build
                      , Devel.Compile
                      , Devel.ReverseProxy
+  other-modules:       Devel.Build
                      , Devel.Args
                      , Devel.Config
                      , Devel.Modules

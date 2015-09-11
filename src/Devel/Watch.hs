@@ -47,6 +47,7 @@ watch isDirty pathsToWatch = do
                 getFilePath (Addition path) = path
                 getFilePath (Modification path) = path
                 getFilePath (Removal path) = path
+                getFilePath NoChange = error "Event gegenrated NoChange while file had changed."
 
                 fileChange = pathMod event
                 file = getFilePath fileChange
@@ -83,7 +84,8 @@ watch isDirty pathsToWatch = do
 -- When a change is found. It modifies isDirty to True.
 watchErrored :: TVar Bool -> IO ()
 watchErrored isDirty = do
-  manager <- startManagerConf defaultConfig
+  manager <- startManagerConf 
+                  defaultConfig {confUsePolling= True}
 
   _ <- treeExtAny manager "." "hamlet"  (\_ -> atomically $ writeTVar isDirty True)
   _ <- treeExtAny manager "." "shamlet" (\_ -> atomically $ writeTVar isDirty True)

@@ -20,6 +20,8 @@ module Devel.Compile
 , finishCompile
 ) where
 
+
+-- The backbone library of ide-backend.
 -- Almost everything is dependent on ide-backend.
 import IdeSession
 
@@ -43,18 +45,20 @@ import Devel.Types
 -- recompile
 import System.FilePath.Posix (takeExtension)
 
+
 -- Initialize the compilation process.
 initCompile :: SessionConfig -> IO (IdeSession, [GhcExtension])
 initCompile sessionConfig = do
-
   -- Initialize the session
   session <- initSession
                defaultSessionInitParams
                sessionConfig
 
+  -- This is "rebuilding" the cabal file.
   extensionList <- getExtensions
 
   return (session, extensionList)
+
 
 compile :: IdeSession -> [GhcExtension] -> FilePath -> IO (IdeSession, IdeSessionUpdate)
 compile session extensionList buildFile = do
@@ -67,30 +71,36 @@ compile session extensionList buildFile = do
 
   return (session, update)
 
-
+ 
 recompile :: IdeSession -> FileChange -> IO (IdeSession, IdeSessionUpdate)
 recompile session fileChange = do
+  let isSourceFile :: FilePath -> Bool
+      isSourceFile fileForUpdate = 
+           (takeExtension fileForUpdate == ".lhs") 
+        || (takeExtension fileForUpdate == ".hs")
 
-  let update = case fileChange of
-                 Addition fileForUpdate -> 
-                   case (takeExtension fileForUpdate == ".lhs") || (takeExtension fileForUpdate == ".hs") of
-                     True  -> updateSourceFileFromFile fileForUpdate
-                     False -> updateDataFileFromFile fileForUpdate fileForUpdate
-                 Modification fileForUpdate -> 
-                   case (takeExtension fileForUpdate == ".lhs") || (takeExtension fileForUpdate == ".hs") of
-                     True  -> updateSourceFileFromFile fileForUpdate
-                     False -> updateDataFileFromFile fileForUpdate fileForUpdate
-                 Removal fileForUpdate -> 
-                   case (takeExtension fileForUpdate == ".lhs") || (takeExtension fileForUpdate == ".hs") of
-                     True  -> updateSourceFileDelete fileForUpdate
-                     False -> updateDataFileDelete fileForUpdate
-                 NoChange -> error "Couldn't rebuild application. Failed update. Please report as a bug."
-                 
+      update :: IdeSessionUpdate
+      update = 
+        case fileChange of
+           Addition fileForUpdate -> 
+             case isSourceFile fileForUpdate of
+               True  -> updateSourceFileFromFile fileForUpdate
+               False -> updateDataFileFromFile fileForUpdate fileForUpdate
+           Modification fileForUpdate -> 
+             case isSourceFile fileForUpdate of
+               True  -> updateSourceFileFromFile fileForUpdate
+               False -> updateDataFileFromFile fileForUpdate fileForUpdate
+           Removal fileForUpdate -> 
+             case isSourceFile fileForUpdate of
+               True  -> updateSourceFileDelete fileForUpdate
+               False -> updateDataFileDelete fileForUpdate
+           NoChange -> error "Failed update during rebuild. Please report as a bug."
+
   return (session, update)
+
 
 finishCompile :: (IdeSession, IdeSessionUpdate) -> IO (Either [SourceError'] IdeSession)
 finishCompile (session, update) = do
-
   _ <- updateSession session update print
 
   -- Customizing error showing.
@@ -106,17 +116,19 @@ finishCompile (session, update) = do
     [] -> Right session
     _  -> Left  errorList
 
-----------------------------------------------------------------------------------------------------
-----------------------------------------------------------------------------------------------------
+-- -----------------------------------------------------------
+--   Utility functions.
+-- -----------------------------------------------------------
 
 -- | Remove the warnings from [SourceError] if any.
 -- Return an empty list if there are no errors and only warnings
 -- Return non empty list if there are errors.
 filterErrors :: [SourceError] -> [SourceError]
 filterErrors [] = []
-filterErrors (x:xs) = case errorKind x  of
-             KindWarning -> filterErrors xs
-             _ -> x : filterErrors xs
+filterErrors (x:xs) = 
+  case errorKind x  of
+    KindWarning -> filterErrors xs
+    _ -> x : filterErrors xs
 
 prettyPrintErrors :: [SourceError] -> [SourceError']
 prettyPrintErrors [] = []
