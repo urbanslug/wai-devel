@@ -11,12 +11,12 @@ Compile compiles the app to give:
 Either a list of source errors or an ide-backend session.
 -}
 
-{-# LANGUAGE PackageImports, OverloadedStrings, TemplateHaskell #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Devel.Compile 
 ( initCompile
 , compile
-, recompile
+-- , recompile
 , finishCompile
 ) where
 
@@ -71,9 +71,7 @@ compile session extensionList buildFile = do
   return (session, update)
 
  
-recompile :: IdeSession -> IO (IdeSession, IdeSessionUpdate)
-recompile session =
-  return (session, mempty)
+
 
 
 finishCompile :: (IdeSession, IdeSessionUpdate) -> IO (Either [SourceError'] IdeSession)

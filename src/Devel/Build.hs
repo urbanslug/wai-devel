@@ -19,6 +19,7 @@ module Devel.Build
 import IdeSession
 import qualified Data.ByteString.Char8 as S8
 import Data.Text (unpack)
+import Data.Monoid (mempty)
 
 -- import Network.Socket (close, Socket)
 import GHC.Conc (newTVarIO)
