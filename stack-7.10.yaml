@@ -1,5 +1,8 @@
 flags: {}
 packages:
 - '.'
+- ../ide-backend/ide-backend
+- ../ide-backend/ide-backend-common
+- ../ide-backend/ide-backend-server
 extra-deps: []
 resolver: lts-3.4

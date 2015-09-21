@@ -42,17 +42,16 @@ import Data.Monoid ((<>))
 import Devel.Paths
 import Devel.Types
 
--- recompile
-import System.FilePath.Posix (takeExtension)
-
 
 -- Initialize the compilation process.
-initCompile :: SessionConfig -> IO (IdeSession, [GhcExtension])
-initCompile sessionConfig = do
+initCompile :: SessionConfig -> Maybe IdeSession -> IO (IdeSession, [GhcExtension])
+initCompile sessionConfig mSession = do
   -- Initialize the session
-  session <- initSession
-               defaultSessionInitParams
-               sessionConfig
+  session <- case mSession of
+               Just session -> return session
+               Nothing -> initSession
+                            defaultSessionInitParams
+                            sessionConfig
 
   -- This is "rebuilding" the cabal file.
   extensionList <- getExtensions
@@ -64,7 +63,7 @@ compile :: IdeSession -> [GhcExtension] -> FilePath -> IO (IdeSession, IdeSessio
 compile session extensionList buildFile = do
 
   -- Description of session updates.
-  let targetList = (TargetsInclude [buildFile] :: Targets)
+  let targetList = TargetsInclude [buildFile] :: Targets
       update = updateTargets targetList
                <> updateCodeGeneration True
                <> updateGhcOpts (["-ddump-hi", "-ddump-to-file"] ++ ["-Wall"] ++ extensionList)
@@ -72,31 +71,9 @@ compile session extensionList buildFile = do
   return (session, update)
 
  
-recompile :: IdeSession -> FileChange -> IO (IdeSession, IdeSessionUpdate)
-recompile session fileChange = do
-  let isSourceFile :: FilePath -> Bool
-      isSourceFile fileForUpdate = 
-           (takeExtension fileForUpdate == ".lhs") 
-        || (takeExtension fileForUpdate == ".hs")
-
-      update :: IdeSessionUpdate
-      update = 
-        case fileChange of
-           Addition fileForUpdate -> 
-             case isSourceFile fileForUpdate of
-               True  -> updateSourceFileFromFile fileForUpdate
-               False -> updateDataFileFromFile fileForUpdate fileForUpdate
-           Modification fileForUpdate -> 
-             case isSourceFile fileForUpdate of
-               True  -> updateSourceFileFromFile fileForUpdate
-               False -> updateDataFileFromFile fileForUpdate fileForUpdate
-           Removal fileForUpdate -> 
-             case isSourceFile fileForUpdate of
-               True  -> updateSourceFileDelete fileForUpdate
-               False -> updateDataFileDelete fileForUpdate
-           NoChange -> error "Failed update during rebuild. Please report as a bug."
-
-  return (session, update)
+recompile :: IdeSession -> IO (IdeSession, IdeSessionUpdate)
+recompile session =
+  return (session, mempty)
 
 
 finishCompile :: (IdeSession, IdeSessionUpdate) -> IO (Either [SourceError'] IdeSession)
@@ -134,9 +111,9 @@ prettyPrintErrors :: [SourceError] -> [SourceError']
 prettyPrintErrors [] = []
 prettyPrintErrors (x: xs) = 
   case errorKind x  of
-    KindWarning -> ("Warning: " ++ (show (errorSpan x)) ++ " " ++ (unpack (errorMsg x))) : prettyPrintErrors xs
-    KindError   -> ("Error: " ++ (show (errorSpan x)) ++ " " ++ (unpack (errorMsg x)))  : prettyPrintErrors xs
-    KindServerDied -> (show (errorKind x)) : prettyPrintErrors xs
+    KindWarning -> ("Warning: " ++ show (errorSpan x) ++ " " ++ unpack (errorMsg x)) : prettyPrintErrors xs
+    KindError   -> ("Error: " ++ show (errorSpan x) ++ " " ++ unpack (errorMsg x))  : prettyPrintErrors xs
+    KindServerDied -> show (errorKind x) : prettyPrintErrors xs
 
 -- | Parse the cabal file to get the ghc extensions in use.
 getExtensions :: IO [GhcExtension]
@@ -152,11 +129,11 @@ getExtensions = do
 
       packDescription = flattenPackageDescription genericPackageDescription
 
-  rawExt <- return $ usedExtensions $ head $ allBuildInfo packDescription
-  let parseExtension :: Extension -> String
-      parseExtension (EnableExtension extension) =  "-X" ++ (show extension)
-      parseExtension (DisableExtension extension) = "-XNo" ++ (show extension)
-      parseExtension (UnknownExtension extension) = "-X" ++ (show extension)
+  let rawExt = usedExtensions $ head $ allBuildInfo packDescription
+      parseExtension :: Extension -> String
+      parseExtension (EnableExtension extension) =  "-X" ++ show extension
+      parseExtension (DisableExtension extension) = "-XNo" ++ show extension
+      parseExtension (UnknownExtension extension) = "-X" ++ show extension
 
       extensions = map parseExtension rawExt
   return extensions

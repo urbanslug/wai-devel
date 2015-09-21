@@ -28,7 +28,7 @@ import Data.List ((\\))
 import System.FilePath ((</>))
 import System.Directory (getCurrentDirectory, doesDirectoryExist, getDirectoryContents)
 import Control.Monad (forM)
-import Control.Concurrent (forkIO)
+import Control.Concurrent (forkIO, killThread, threadDelay)
 import System.FilePath.Posix (replaceExtension, dropExtension, takeExtensions)
 import Control.Monad.IO.Class (liftIO)
 import System.FilePath (pathSeparator)
@@ -59,7 +59,9 @@ getFilesToWatch session = do
   -- Add the cabal file path to paths to watch for.
   cabalFile <- getCabalFile
   -- Clean up after GHC
-  _ <- forkIO $ delitter
+  -- delitterId <- forkIO $ delitter
+  -- threadDelay 1000
+  -- killThread delitterId
   return $ cabalFile : srcPaths ++ thDeps 
 
 getCabalFile :: IO FilePath

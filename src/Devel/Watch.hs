@@ -13,6 +13,8 @@ Added or removed files don't trigger new builds.
 {-# LANGUAGE OverloadedStrings, CPP #-}
 module Devel.Watch where
 
+import IdeSession
+
 import Control.Monad.STM
 import Control.Concurrent.STM.TVar
 
@@ -22,6 +24,7 @@ import Control.Monad      (forever)
 import Control.Concurrent (threadDelay)
 
 import Devel.Types
+import Devel.Paths (getFilesToWatch)
 
 # if __GLASGOW_HASKELL__ < 710
 import Data.Text (unpack)
@@ -30,8 +33,9 @@ import qualified Filesystem.Path as FSP
 #endif
 
 -- "Smart" file watching.
-watch :: TVar (Bool, FileChange) -> [FilePath] -> IO ()
-watch isDirty pathsToWatch = do
+watch :: TVar (Bool, FileChange) -> IdeSession -> IO ()
+watch isDirty session = do
+  pathsToWatch <- getFilesToWatch session
   manager <- startManagerConf defaultConfig
   _ <- watchTree manager "." (const True)
 

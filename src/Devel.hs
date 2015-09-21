@@ -57,4 +57,5 @@ buildAndRun buildFile runFunction isReverseProxy = do
     isReverseProxy -- | Use reverse proxying? Default to True. 
     sessionConfig -- | We need this when compiling.
     (fromProxyPort, toProxyPort) -- | The port we reverse proxy to and from.
+    Nothing -- | Maybe IdeSession
     NoChange -- | File to be rebuilt.

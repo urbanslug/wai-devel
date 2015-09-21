@@ -8,7 +8,8 @@ Stability   : experimental
 Portability : POSIX
 -}
 
-{-# LANGUAGE RecordWildCards, OverloadedStrings #-}
+-- {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Devel.Build 
 ( build
@@ -32,26 +33,26 @@ import Devel.Watch
 
 
 -- | Compiles and calls run on your WAI application.
-build :: FilePath -> String ->  Bool -> SessionConfig -> (Int, Int) -> FileChange -> IO ()
-build buildFile runFunction isReverseProxy sessionConfig (fromProxyPort, toProxyPort) fileChange = do
+build :: FilePath -> String ->  Bool -> SessionConfig -> (Int, Int) -> Maybe IdeSession -> FileChange -> IO ()
+build buildFile runFunction isReverseProxy sessionConfig (fromProxyPort, toProxyPort) mSession fileChange = do
 
-  (initialSession, extensionList) <- initCompile sessionConfig
+  (initialSession, extensionList) <- initCompile sessionConfig mSession
+
   _ <- case fileChange of
          NoChange -> 
-          case isReverseProxy of
-            True -> do
-              _ <- forkIO $ startReverseProxy (fromProxyPort, toProxyPort)
-              putStrLn $ "Starting devel application at http://localhost:"++ show fromProxyPort
-            False -> putStrLn $ "Starting app without reverse proxying at http://localhost:"++ show fromProxyPort
+          if isReverseProxy then
+            do _ <- forkIO $ startReverseProxy (fromProxyPort, toProxyPort)
+               putStrLn $ "Starting devel application at http://localhost:" ++
+                          show fromProxyPort
+          else
+            putStrLn $ "Starting app without reverse proxying at http://localhost:" ++
+                       show fromProxyPort
          _  -> return ()
-
 
   (updatedSession, update) <- 
      case fileChange of
        NoChange -> compile initialSession extensionList buildFile
-       -- We can't call this with recompile yet because
-       -- ide-backend doesn't allow it.
-       _        -> compile initialSession extensionList buildFile
+       _        -> return (initialSession, mempty) -- recompile initialSession
 
   eitherSession <- finishCompile (updatedSession, update)
 
@@ -70,7 +71,7 @@ build buildFile runFunction isReverseProxy sessionConfig (fromProxyPort, toProxy
       
       _ <- shutdownSession updatedSession
 
-      build buildFile runFunction False sessionConfig (fromProxyPort, toProxyPort) NoChange
+      build buildFile runFunction False sessionConfig (fromProxyPort, toProxyPort) Nothing NoChange
 
     Right session -> do
       -- run the session
@@ -80,18 +81,20 @@ build buildFile runFunction isReverseProxy sessionConfig (fromProxyPort, toProxy
       isDirty <- newTVarIO (False, NoChange)
 
       -- List of paths to watch
-      pathsToWatch <- getFilesToWatch session
+      -- pathsToWatch <- getFilesToWatch session
 
       -- Watch for changes in the current working directory.
-      _ <- forkIO $ watch isDirty pathsToWatch
+      watchId <- forkIO $ watch isDirty session
 
       -- Block until relevant change is made then carry on with program execution.
       newFileChange <- checkForChange isDirty
-
+      
+      killThread watchId
+      
       -- Stop the current app.
       _ <- stopApp runActionsRunResult threadId
       putStrLn "\n\nRebuilding...\n\n"
-      build buildFile runFunction isReverseProxy sessionConfig (fromProxyPort, toProxyPort) newFileChange
+      build buildFile runFunction isReverseProxy sessionConfig (fromProxyPort, toProxyPort) (Just session) newFileChange
 
 
 run :: IdeSession -> FilePath -> String -> IO (RunActions RunResult, ThreadId)
@@ -114,6 +117,7 @@ stopApp :: RunActions RunResult -> ThreadId -> IO ()
 stopApp runResult threadId = do
   interrupt runResult
   killThread threadId
+
 
 -- | Run for as long as we need to.
 loop :: RunActions RunResult -> IO ()

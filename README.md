@@ -15,15 +15,14 @@ Works with a fresh yesod scaffold.
 It gives your application a port to listen on via the environment variable PORT.  
 Therefore, your application should "get" the environment variable PORT to find a port which it shall listen on.
 
-Due to it's dependence on stack you can pass the `STACK_YAML=...` variable to wai-devel. \o/ win
-e.g `STACK_YAML=stack-7.10 wai-devel`
+run stack build before running wai-devel for your application for the first time.
 
 Sorry cabal binary users. Support for you is coming soon.
 
 ### Issues
 
-The build for the latest LTS fails on travis but works locally.
-This is due to differences in the build plan.
+Fixed recompiles to only recompile the changed file but broke recompiles in case
+the change is in a TH dependency file such as shakesperean templates.
 
 
 ### Coming next
