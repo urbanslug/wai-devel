@@ -19,6 +19,9 @@ run stack build before running wai-devel for your application for the first time
 
 Sorry cabal binary users. Support for you is coming soon.
 
+**You don't need to set anything such as \`GHC_PACKAGE_PATH\` as long as stack can build your app wai-devel will.**
+The only thing that would be helpful setting would be the PORT environment variable if you wish not to use 3000.
+
 ### Issues
 
 Fixed recompiles to only recompile the changed file but broke recompiles in case

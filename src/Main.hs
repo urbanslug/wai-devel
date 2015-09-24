@@ -20,20 +20,13 @@ import System.Environment (setEnv)
 main :: IO ()
 main = do
   cmdArgs <- execParser opts
-  _ <- case interfaceFile cmdArgs of
-         Just path -> rawSystem "ghc" $ ["--show-iface "] ++ [show path]
-         _         -> return ExitSuccess
 
-  -- Default reverse proxying is True
-  isReverseProxy' <- return $ isReverseProxy cmdArgs
+  let isReverseProxy' = isReverseProxy cmdArgs
+      buildFile' = buildFile cmdArgs
+      runFunction' = runFunction cmdArgs
 
-  buildFile' <- return $ case buildFile cmdArgs of
-                              Just path' -> path'
-                              _ -> "Application.hs"
-
-  runFunction' <- return $ case runFunction cmdArgs of
-                               Just function' -> function'
-                               _ -> "develMain"
+  print $ buildFile cmdArgs
+  print $ runFunction cmdArgs
 
   buildAndRun buildFile' runFunction' isReverseProxy'
   where opts :: ParserInfo CmdArgs
