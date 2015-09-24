@@ -106,7 +106,7 @@ test-suite tests
   type:                exitcode-stdio-1.0
   main-is:             Tests.hs
   -- exposed-modules:   
-  other-modules:       Tests.Watch
+  -- other-modules:       Tests.Watch
   hs-source-dirs:      tests
   build-depends:       base ==4.*
                      , directory

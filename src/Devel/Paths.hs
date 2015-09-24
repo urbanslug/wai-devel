@@ -109,7 +109,8 @@ getRecursiveContents topdir = do
   names <- getDirectoryContents topdir
   
   -- We want to take these files out.
-  let patterns = [ (compile "*.*~")
+  let patterns :: [Pattern]
+      patterns = [ (compile "*.*~")
                  , (compile "*.hi")
                  , (compile "*.dump-hi")
                  , (compile "*.o")
@@ -146,7 +147,8 @@ delitter = do
           names <- getDirectoryContents topdir
 
           -- We want to leave these files out of the list
-          let patterns = [ (compile "*.*~")
+          let patterns :: [Pattern]
+              patterns = [ (compile "*.*~")
                          , (compile "*.hs")
                          , (compile "*.txt")
                          , (compile "*.o")
