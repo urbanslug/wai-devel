@@ -25,9 +25,6 @@ main = do
       buildFile' = buildFile cmdArgs
       runFunction' = runFunction cmdArgs
 
-  print $ buildFile cmdArgs
-  print $ runFunction cmdArgs
-
   buildAndRun buildFile' runFunction' isReverseProxy'
   where opts :: ParserInfo CmdArgs
         opts = info (helper <*> cmdArgs)
