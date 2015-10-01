@@ -16,6 +16,8 @@ Will hopefully be moved upstream to ide-backend.
 module Devel.Paths 
 ( getFilesToWatch
 , getCabalFile
+, getRecursiveContents
+, getRecursiveContentsRelative
 ) where
 
 -- local imports
@@ -123,6 +125,7 @@ getRecursiveContents topdir = do
                  , (compile "*.inplace")
                  , (compile "*.cache")
                  , (compile "*.*.el")
+                 , (compile ".*")
                  ]
   (x, _) <- globDir patterns topdir
 
@@ -135,6 +138,42 @@ getRecursiveContents topdir = do
      else return $ [path] \\ (concat x)
   return (concat paths)
 
+getRecursiveContentsRelative :: FilePath -> IO [FilePath]
+getRecursiveContentsRelative topdir = do
+  names <- getDirectoryContents topdir
+
+  -- We want to take these files out.
+  let patterns :: [Pattern]
+      patterns = [ (compile "*.*~")
+                 , (compile "*.hi")
+                 , (compile "*.dump-hi")
+                 , (compile "*.o")
+                 , (compile "*.dyn_o")
+                 , (compile "*.dyn_hi")
+                 , (compile "*.so")
+                 , (compile "*.conf")
+                 , (compile "*.h")
+                 , (compile "*.a")
+                 , (compile "*.inplace")
+                 , (compile "*.cache")
+                 , (compile "*.*.el")
+                 , (compile ".*")
+                 ]
+  (x, _) <- globDir patterns topdir
+
+  let properNames = filter (`notElem` [".", ".."]) names
+  paths <- forM properNames $ \name -> do
+   let path = (makePathRelative topdir) </> name
+   isDirectory <- doesDirectoryExist path
+   if isDirectory
+     then getRecursiveContents path
+     else return $ [path] \\ (concat x)
+  return (concat paths)
+  where makePathRelative :: FilePath -> FilePath
+        makePathRelative topDir 
+          | topDir == "." = ""
+          | otherwise = topDir
+          
 -- Clean up after ghc -ddump-hi -ddump-to-file
 delitter :: IO ()
 delitter = do
@@ -162,6 +201,7 @@ delitter = do
                          , (compile "*.inplace")
                          , (compile "*.cache")
                          , (compile "*.*.el")
+                         , (compile ".*")
                          ]
           (x, _) <- globDir patterns topdir
           let properNames = filter (`notElem` [".", ".."]) names
@@ -172,6 +212,7 @@ delitter = do
              then getRecursiveContents path
              else return $ [path] \\ (concat x)
           return (concat paths)
+
         del :: FilePath -> IO ()
         del fp = do
           case   ((takeExtensions fp) == ".dump-hi" )

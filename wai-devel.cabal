@@ -26,6 +26,7 @@ library
                      , Devel.Args
                      , Devel.Config
                      , Devel.Modules
+                     , Devel.Ghc
 
   -- other-extensions:
   build-depends:       base ==4.*
@@ -65,7 +66,16 @@ library
 executable wai-devel
   ghc-options:         -rtsopts -O2
   main-is:             Main.hs
-  -- other-modules:
+  other-modules:       Devel
+                       Devel.Args
+                       Devel.Build
+                       Devel.Compile
+                       Devel.Config
+                       Devel.Modules
+                       Devel.Paths
+                       Devel.ReverseProxy
+                       Devel.Types
+                       Devel.Watch
   -- other-extensions:
   build-depends:       base
                      , Cabal-ide-backend

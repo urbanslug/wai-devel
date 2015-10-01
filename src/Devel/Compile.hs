@@ -42,9 +42,13 @@ import Data.Monoid ((<>))
 import Devel.Paths
 import Devel.Types
 
+import  System.FilePath.Posix (takeExtension, splitPath)
+import Data.List (union, delete)
+import Data.Maybe (fromMaybe)
+
 
 -- Initialize the compilation process.
-initCompile :: SessionConfig -> Maybe IdeSession -> IO (IdeSession, [GhcExtension])
+initCompile :: SessionConfig -> Maybe IdeSession -> IO (IdeSession, [GhcExtension], [FilePath])
 initCompile sessionConfig mSession = do
   -- Initialize the session
   session <- case mSession of
@@ -54,16 +58,44 @@ initCompile sessionConfig mSession = do
                             sessionConfig
 
   -- This is "rebuilding" the cabal file.
-  extensionList <- getExtensions
+  (extensionList, srcDir, cabalSrcList) <- getExtensions
+  sourceList <- getSourceList srcDir cabalSrcList
+  return (session, extensionList, sourceList)
 
-  return (session, extensionList)
+getSourceList :: [FilePath] -> [FilePath] -> IO [FilePath]
+getSourceList srcDir cabalSrcList = do
 
+  fileList' <- mapM getRecursiveContentsRelative srcDir
 
-compile :: IdeSession -> [GhcExtension] -> FilePath -> IO (IdeSession, IdeSessionUpdate)
-compile session extensionList buildFile = do
+  let isTest :: FilePath -> Bool
+      isTest fp = case splitPath fp of
+                    (x:_) -> x == "test/"
+                    []    -> False
+
+      -- Remove duplicate values. 
+      fileList = foldr union [] fileList'
+      -- Remove files in test dir.
+      fileListNoTests = filter (not.isTest) fileList
+
+      -- Add both lists together.
+      fileListCombined = fileListNoTests ++ cabalSrcList
+
+      -- Remove all non hs and non .lhs files.
+      -- also remove "app/devel.hs" because it has an extra main function
+      sourceList = delete "app/devel.hs" $ 
+                          filter 
+                            (\f -> let ext = takeExtension f in ext == ".lhs" || ext == ".hs") 
+                            fileListCombined
+
+  return sourceList
+
+compile :: IdeSession -> FilePath -> [GhcExtension] -> [FilePath] -> IO (IdeSession, IdeSessionUpdate)
+compile session buildFile extensionList sourceList = do
 
   -- Description of session updates.
-  let targetList = TargetsInclude [buildFile] :: Targets
+  let targetList = TargetsInclude (if buildFile `elem` sourceList
+                                      then sourceList
+                                      else buildFile : sourceList) :: Targets
       update = updateTargets targetList
                <> updateCodeGeneration True
                <> updateGhcOpts (["-ddump-hi", "-ddump-to-file"] ++ ["-Wall"] ++ extensionList)
@@ -114,7 +146,7 @@ prettyPrintErrors (x: xs) =
     KindServerDied -> show (errorKind x) : prettyPrintErrors xs
 
 -- | Parse the cabal file to get the ghc extensions in use.
-getExtensions :: IO [GhcExtension]
+getExtensions :: IO ([GhcExtension], [FilePath], [FilePath])
 getExtensions = do               
   cabalFilePath <- getCabalFile
   cabalFile <- readFile cabalFilePath
@@ -127,11 +159,20 @@ getExtensions = do
 
       packDescription = flattenPackageDescription genericPackageDescription
 
-  let rawExt = usedExtensions $ head $ allBuildInfo packDescription
+      rawExt = usedExtensions $ head $ allBuildInfo packDescription
+      
+      lib = fromMaybe emptyLibrary $ library packDescription
+
+  -- I think it would be wise to avoid src files under executable to avoid conflict.
+  let srcDir  = hsSourceDirs $ libBuildInfo lib
+      srcList = extraSrcFiles packDescription
+      
+
       parseExtension :: Extension -> String
       parseExtension (EnableExtension extension) =  "-X" ++ show extension
       parseExtension (DisableExtension extension) = "-XNo" ++ show extension
       parseExtension (UnknownExtension extension) = "-X" ++ show extension
 
       extensions = map parseExtension rawExt
-  return extensions
+
+  return (extensions, srcDir, srcList)

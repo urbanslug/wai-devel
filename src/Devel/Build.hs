@@ -41,7 +41,8 @@ import Devel.Watch
 build :: FilePath -> String ->  Bool -> SessionConfig -> (Int, Int) -> Maybe IdeSession -> Bool -> IO ()
 build buildFile runFunction isReverseProxy sessionConfig (fromProxyPort, toProxyPort) mSession isRebuild = do
 
-  (initialSession, extensionList) <- initCompile sessionConfig mSession
+  (initialSession, extensionList, includeTargets) <- initCompile sessionConfig mSession
+
   -- Do this if isRebuild is False.
   unless isRebuild $
     if isReverseProxy then
@@ -56,7 +57,7 @@ build buildFile runFunction isReverseProxy sessionConfig (fromProxyPort, toProxy
   (updatedSession, update) <- 
     if isRebuild
        then return (initialSession, mempty)
-       else compile initialSession extensionList buildFile
+       else compile initialSession buildFile extensionList includeTargets
 
   eitherSession <- finishCompile (updatedSession, update)
 
@@ -81,7 +82,7 @@ build buildFile runFunction isReverseProxy sessionConfig (fromProxyPort, toProxy
     Right session -> do
       -- run the session
       (runActionsRunResult, threadId) <- run session buildFile runFunction
-      
+
       -- Start watching for file changes.
       isDirty <- newTVarIO False
 
@@ -107,7 +108,7 @@ run session buildFile runFunction = do
   -- Get the module name from the file path
   mapFunction <- getFileMap session
   buildModule <- case mapFunction buildFile of
-                   Nothing -> fail $ "The file's module name for:"++ (show buildFile) ++"couldn't be found"
+                   Nothing -> fail $ "The file's module name for: " ++ (show buildFile) ++" couldn't be found"
                    Just moduleId -> return $ unpack $ moduleName moduleId
 
   -- Run the given ide-backend session.
