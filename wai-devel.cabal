@@ -26,7 +26,6 @@ library
                      , Devel.Args
                      , Devel.Config
                      , Devel.Modules
-                     , Devel.Ghc
 
   -- other-extensions:
   build-depends:       base ==4.*
@@ -119,9 +118,6 @@ test-suite tests
   -- other-modules:       Tests.Watch
   hs-source-dirs:      tests
   build-depends:       base ==4.*
-                     , directory
-                     , HUnit >= 1.2 && < 1.4
-                     , stm
-                     , tasty >= 0.10 && < 0.11
+                     , hspec
                      , wai-devel
   default-language:    Haskell2010

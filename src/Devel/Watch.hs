@@ -32,10 +32,15 @@ import Filesystem.Path.CurrentOS (toText)
 import qualified Filesystem.Path as FSP
 #endif
 
+import System.Directory (getCurrentDirectory)
+import System.FilePath (pathSeparator)
+
+
 -- "Smart" file watching.
-watch :: TVar Bool -> IdeSession -> IO ()
-watch isDirty session = do
-  pathsToWatch <- getFilesToWatch session
+watch :: TVar Bool -> [FilePath] -> IO ()
+watch isDirty includeTargets = do
+  dir <- getCurrentDirectory
+  let pathsToWatch = map (\fp -> dir ++ (pathSeparator: fp)) includeTargets
   manager <- startManagerConf defaultConfig
   _ <- watchTree manager "." (const True)
          -- Last argument to watchTree.
