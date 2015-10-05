@@ -30,11 +30,11 @@ import Data.List ((\\))
 import System.FilePath ((</>))
 import System.Directory (getCurrentDirectory, doesDirectoryExist, getDirectoryContents)
 import Control.Monad (forM)
-import Control.Concurrent (forkIO, killThread, threadDelay)
-import System.FilePath.Posix (replaceExtension, dropExtension, takeExtensions)
+-- import Control.Concurrent (forkIO, killThread, threadDelay)
+import System.FilePath.Posix (replaceExtension, dropExtension)
 import Control.Monad.IO.Class (liftIO)
 import System.FilePath (pathSeparator)
-import System.Directory (removeFile)
+-- import System.Directory (removeFile)
 
 import qualified Data.ByteString.Char8 as C8
 
@@ -175,6 +175,7 @@ getRecursiveContentsRelative topdir = do
           | otherwise = topDir
           
 -- Clean up after ghc -ddump-hi -ddump-to-file
+{-
 delitter :: IO ()
 delitter = do
   cwd <- getCurrentDirectory
@@ -222,3 +223,4 @@ delitter = do
               || ((takeExtensions fp) == ".hi" ) of True  -> removeFile fp
                                                     False -> return ()
           
+-}

@@ -17,7 +17,7 @@ import System.Environment (lookupEnv, setEnv)
 import Devel.Config (setConfig)
 import Devel.ReverseProxy (cyclePorts)
 import Devel.Build (build)
-import Devel.Types
+-- import Devel.Types
 
 -- Build and run our haskell application.
 buildAndRun :: FilePath -> String ->  Bool -> IO ()
@@ -46,9 +46,9 @@ buildAndRun buildFile runFunction isReverseProxy = do
   -- If reverse proxying is set to disabled i.e False
   -- Then PORT variable is set to the source port i.e fromProxyPort
   -- By default reverse proxying is True.
-  case isReverseProxy of
-    True  -> setEnv "PORT" (show toProxyPort)
-    False -> setEnv "PORT" (show fromProxyPort)
+  if isReverseProxy
+     then setEnv "PORT" (show toProxyPort)
+     else setEnv "PORT" (show fromProxyPort)
 
   -- | We call the build function only the first time we want to build our application.
   build

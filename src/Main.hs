@@ -10,20 +10,16 @@ Portability : POSIX
 module Main where
 
 import Devel
-import Devel.Args
+import Devel.CmdArgs
 import Options.Applicative
-import System.Process (rawSystem)
-import System.Exit (ExitCode(ExitSuccess))
-
-import System.Environment (setEnv)
 
 main :: IO ()
 main = do
-  cmdArgs <- execParser opts
+  cmdArgs' <- execParser opts
 
-  let isReverseProxy' = isReverseProxy cmdArgs
-      buildFile' = buildFile cmdArgs
-      runFunction' = runFunction cmdArgs
+  let isReverseProxy' = isReverseProxy cmdArgs'
+      buildFile' = buildFile cmdArgs'
+      runFunction' = runFunction cmdArgs'
 
   buildAndRun buildFile' runFunction' isReverseProxy'
   where opts :: ParserInfo CmdArgs

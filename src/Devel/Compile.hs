@@ -16,7 +16,6 @@ Either a list of source errors or an ide-backend session.
 module Devel.Compile 
 ( initCompile
 , compile
--- , recompile
 , finishCompile
 ) where
 
@@ -127,6 +126,38 @@ finishCompile (session, update) = do
 --   Utility functions.
 -- -----------------------------------------------------------
 
+-- | Parse the cabal file to get the ghc extensions in use.
+getExtensions :: IO ([GhcExtension], [FilePath], [FilePath])
+getExtensions = do               
+  cabalFilePath <- getCabalFile
+  cabalFile <- readFile cabalFilePath
+
+  let unsafePackageDescription = parsePackageDescription cabalFile
+
+      genericPackageDescription = case unsafePackageDescription of
+                                ParseOk _ a -> a
+                                _           -> error "failed package description."
+
+      packDescription = flattenPackageDescription genericPackageDescription
+
+      rawExt = usedExtensions $ head $ allBuildInfo packDescription
+
+      lib = fromMaybe emptyLibrary $ library packDescription
+
+  -- I think it would be wise to avoid src files under executable to avoid conflict.
+  let srcDir  = hsSourceDirs $ libBuildInfo lib
+      srcList = extraSrcFiles packDescription
+
+
+      parseExtension :: Extension -> String
+      parseExtension (EnableExtension extension) =  "-X" ++ show extension
+      parseExtension (DisableExtension extension) = "-XNo" ++ show extension
+      parseExtension (UnknownExtension extension) = "-X" ++ show extension
+
+      extensions = map parseExtension rawExt
+
+  return (extensions, srcDir, srcList)
+
 -- | Remove the warnings from [SourceError] if any.
 -- Return an empty list if there are no errors and only warnings
 -- Return non empty list if there are errors.
@@ -144,35 +175,3 @@ prettyPrintErrors (x: xs) =
     KindWarning -> ("Warning: " ++ show (errorSpan x) ++ " " ++ unpack (errorMsg x)) : prettyPrintErrors xs
     KindError   -> ("Error: " ++ show (errorSpan x) ++ " " ++ unpack (errorMsg x))  : prettyPrintErrors xs
     KindServerDied -> show (errorKind x) : prettyPrintErrors xs
-
--- | Parse the cabal file to get the ghc extensions in use.
-getExtensions :: IO ([GhcExtension], [FilePath], [FilePath])
-getExtensions = do               
-  cabalFilePath <- getCabalFile
-  cabalFile <- readFile cabalFilePath
-
-  let unsafePackageDescription = parsePackageDescription cabalFile
-
-      genericPackageDescription = case unsafePackageDescription of
-                                ParseOk _ a -> a
-                                _           -> error "failed package description."
-
-      packDescription = flattenPackageDescription genericPackageDescription
-
-      rawExt = usedExtensions $ head $ allBuildInfo packDescription
-      
-      lib = fromMaybe emptyLibrary $ library packDescription
-
-  -- I think it would be wise to avoid src files under executable to avoid conflict.
-  let srcDir  = hsSourceDirs $ libBuildInfo lib
-      srcList = extraSrcFiles packDescription
-      
-
-      parseExtension :: Extension -> String
-      parseExtension (EnableExtension extension) =  "-X" ++ show extension
-      parseExtension (DisableExtension extension) = "-XNo" ++ show extension
-      parseExtension (UnknownExtension extension) = "-X" ++ show extension
-
-      extensions = map parseExtension rawExt
-
-  return (extensions, srcDir, srcList)

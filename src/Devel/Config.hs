@@ -18,11 +18,17 @@ Will be rewritten to depend on the stack library.
 -}
 
 
-module Devel.Config (setConfig) where
+module Devel.Config 
+( setConfig
+, getPath
+, getPkgDb
+) where
 
 import System.Process (readProcessWithExitCode)
 import System.Environment (unsetEnv, setEnv)
 import System.Exit (ExitCode(..))
+
+import Devel.Types
 
 setConfig :: IO ()
 setConfig = do
@@ -31,11 +37,6 @@ setConfig = do
   _ <- unsetEnv "GHC_PACKAGE_PATH"
   _ <- setEnv "PATH" path
   setEnv "GHC_PACKAGE_PATH" pkgDb
-
-
-type PATH = String
-type PACKAGEDB = String
-type Config = (PATH, PACKAGEDB)
 
 getConfig :: IO Config
 getConfig = do

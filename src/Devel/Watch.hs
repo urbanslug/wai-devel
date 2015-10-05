@@ -13,7 +13,7 @@ Added or removed files don't trigger new builds.
 {-# LANGUAGE OverloadedStrings, CPP #-}
 module Devel.Watch where
 
-import IdeSession
+-- import IdeSession
 
 import Control.Monad.STM
 import Control.Concurrent.STM.TVar
@@ -23,8 +23,8 @@ import System.FSNotify.Devel
 import Control.Monad      (forever)
 import Control.Concurrent (threadDelay)
 
-import Devel.Types
-import Devel.Paths (getFilesToWatch)
+-- import Devel.Types
+-- import Devel.Paths (getFilesToWatch)
 
 # if __GLASGOW_HASKELL__ < 710
 import Data.Text (unpack)
@@ -36,22 +36,35 @@ import System.Directory (getCurrentDirectory)
 import System.FilePath (pathSeparator)
 
 
--- "Smart" file watching.
 watch :: TVar Bool -> [FilePath] -> IO ()
 watch isDirty includeTargets = do
   dir <- getCurrentDirectory
+  -- Making paths to watch a list of absolute paths.
   let pathsToWatch = map (\fp -> dir ++ (pathSeparator: fp)) includeTargets
   manager <- startManagerConf defaultConfig
   _ <- watchTree manager "." (const True)
          -- Last argument to watchTree.
+# if __GLASGOW_HASKELL__ >= 710
          (\event -> do
             let getPath :: Event -> FilePath
                 getPath (Added fp _)    = fp
                 getPath (Modified fp _) = fp
                 getPath (Removed fp _)  = fp
-
+                
                 isModified = getPath event `elem` pathsToWatch
+                
             atomically $ writeTVar isDirty isModified)
+            
+#else
+         (\event -> do 
+            pathMod' <- case toText $ eventPath event of
+                            Right text -> return $ unpack text -- Gives an abs path
+                            Left text -> fail $ unpack text
+                            
+            let isModified = pathMod' `elem` pathsToWatch
+            
+            atomically $ writeTVar isDirty isModified)
+#endif
 
   _ <- forever $ threadDelay maxBound
   stopManager manager
@@ -78,16 +91,5 @@ watchErrored isDirty = do
 
 checkForChange :: TVar Bool -> IO ()
 checkForChange isDirty =
-  atomically $ do readTVar isDirty >>= check
-                  writeTVar isDirty False
- {-do
-  atomically $ readTVar isDirty >>= \(isDirty', _) -> check isDirty'
-  (_, fileChange) <- readTVarIO isDirty
-  print fileChange
-  atomically $ writeTVar isDirty (False, NoChange)
-  return fileChange-}
-
-checkForChangeErrored :: TVar Bool -> IO ()
-checkForChangeErrored isDirty =
   atomically $ do readTVar isDirty >>= check
                   writeTVar isDirty False

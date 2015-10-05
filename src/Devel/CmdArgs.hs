@@ -7,7 +7,7 @@ Maintainer  : njagi@urbanslug.com
 Stability   : experimental
 Portability : POSIX
 -}
-module Devel.Args
+module Devel.CmdArgs
 (  cmdArgs
 ,  CmdArgs (..)
 ) where
@@ -19,10 +19,8 @@ import Options.Applicative
 data CmdArgs = CmdArgs
   { buildFile :: FilePath
   , runFunction :: String
-  -- By default reverse proxy should be True
-  , isReverseProxy :: Bool 
---  , interfaceFile :: Maybe FilePath
-  }
+  , isReverseProxy :: Bool -- By default reverse proxy should be True 
+  } deriving (Show, Eq)
 
 cmdArgs :: Parser CmdArgs
 cmdArgs = CmdArgs

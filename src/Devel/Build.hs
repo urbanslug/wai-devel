@@ -8,8 +8,8 @@ Stability   : experimental
 Portability : POSIX
 -}
 
--- {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE CPP #-}
 
 module Devel.Build 
 ( build
@@ -19,22 +19,19 @@ module Devel.Build
 import IdeSession
 import qualified Data.ByteString.Char8 as S8
 import Data.Text (unpack)
--- port Data.Monoid (mempty)
 
--- import Network.Socket (close, Socket)
 import GHC.Conc (newTVarIO)
 import Control.Concurrent (forkIO, killThread, ThreadId)
 
 -- Rebuild
 import Control.Monad (unless)
+# if __GLASGOW_HASKELL__ < 710
+import Data.Monoid (mempty)
+#endif
 
-
--- import Devel.Paths
 import Devel.Compile
 import Devel.ReverseProxy (startReverseProxy)
--- import Devel.Types
 import Devel.Watch
-
 
 
 -- | Compiles and calls run on your WAI application.
@@ -69,7 +66,7 @@ build buildFile runFunction isReverseProxy sessionConfig (fromProxyPort, toProxy
       _ <- forkIO $ watchErrored isDirty
 
       -- Block until relevant change is made then carry on with program execution.
-      _ <- checkForChangeErrored isDirty
+      _ <- checkForChange isDirty
 
       -- Stop the current app.
       putStrLn "\n\nRebuilding...\n\n"
