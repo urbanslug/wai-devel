@@ -39,7 +39,7 @@ library
                      , directory >= 1.2 && < 1.3
                      , filepath >= 1.3 && < 1.5
                      , fsnotify >= 0.1 && < 0.3
-                     , ghc >= 7.8 && < 7.11
+                     , ghc >= 7.8 && < 7.12
                      , http-client >= 0.4 && < 0.5
                      , http-conduit >= 2.1 && < 2.2
                      , http-reverse-proxy >= 0.4 && < 0.5
@@ -119,7 +119,7 @@ test-suite tests
   -- other-modules:       Tests.Watch
   hs-source-dirs:      tests
   build-depends:       base ==4.*
-                     , hspec >= 2.1 && < 3.0
+                     , hspec
                      , stm
                      , wai-devel
   default-language:    Haskell2010

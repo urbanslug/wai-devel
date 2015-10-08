@@ -1,9 +1,4 @@
 flags: {}
-packages:
-- '.'
-- ../ide-backend/ide-backend
-- ../ide-backend/ide-backend-common
-- ../ide-backend/ide-backend-server
-extra-deps: 
-- hspec-2.1.7
+packages: []
+extra-deps: []
 resolver: lts-2.22

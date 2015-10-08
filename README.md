@@ -2,7 +2,6 @@
 [WAI] compliant development server for haskell web frameworks.
 
 ### Installation
-
 - cd wai-devel
 - stack build
 - stack install
@@ -11,21 +10,10 @@ The wai-devel binary will now be in your ~/.local/bin you can use it freely.
 
 
 ### Usage
-Works with a fresh yesod scaffold.  
-It gives your application a port to listen on via the environment variable PORT.  
-Therefore, your application should "get" the environment variable PORT to find a port which it shall listen on.
-
-run stack build before running wai-devel for your application for the first time.
-
-Sorry cabal binary users. Support for you is coming soon.
-
-**You don't need to set anything such as \`GHC_PACKAGE_PATH\` as long as stack can build your app wai-devel will.**
-The only thing that would be helpful setting would be the PORT environment variable if you wish not to use 3000.
+See the [wiki].
 
 ### Issues
-
-Fixed recompiles to only recompile the changed file but broke recompiles in case
-the change is in a TH dependency file such as shakesperean templates.
+Doesn't autorecompile due to changes in Template Haskell files due to a bug .
 
 
 ### Coming next
@@ -35,3 +23,4 @@ the change is in a TH dependency file such as shakesperean templates.
 - Proper support for cabal binary users and their sandboxes.
 
 [WAI]: http://www.yesodweb.com/book/web-application-interface
+[wiki]: https://github.com/urbanslug/wai-devel/wiki

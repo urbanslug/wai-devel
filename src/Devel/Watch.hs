@@ -28,7 +28,7 @@ import Control.Concurrent (threadDelay)
 # if __GLASGOW_HASKELL__ < 710
 import Data.Text (unpack)
 import Filesystem.Path.CurrentOS (toText)
-import qualified Filesystem.Path as FSP
+-- import qualified Filesystem.Path as FSP
 #endif
 
 import System.Directory (getCurrentDirectory)
