@@ -19,7 +19,6 @@ import Control.Monad.STM
 import Control.Concurrent.STM.TVar
 
 import System.FSNotify
-import System.FSNotify.Devel
 import Control.Monad      (forever)
 import Control.Concurrent (threadDelay)
 
@@ -35,12 +34,17 @@ import qualified Filesystem.Path as FSP
 import System.Directory (getCurrentDirectory)
 import System.FilePath (pathSeparator)
 
+import Devel.Paths
 
 watch :: TVar Bool -> [FilePath] -> IO ()
 watch isDirty includeTargets = do
-  dir <- getCurrentDirectory
+  -- Get files to watch.
+  files <- getFilesToWatch includeTargets
   -- Making paths to watch a list of absolute paths.
-  let pathsToWatch = map (\fp -> dir ++ (pathSeparator: fp)) includeTargets
+  dir <- getCurrentDirectory
+  let pathsToWatch = map (\fp -> dir ++ (pathSeparator: fp)) files
+
+  -- Actual file watching.
   manager <- startManagerConf defaultConfig
   _ <- watchTree manager "." (const True)
          -- Last argument to watchTree.
@@ -68,26 +72,6 @@ watch isDirty includeTargets = do
 
   _ <- forever $ threadDelay maxBound
   stopManager manager
-
--- | Runs in the current working directory. Watches when there's an error.
--- Watches for file changes for the specified file extenstions
--- When a change is found. It modifies isDirty to True.
-watchErrored :: TVar Bool -> IO ()
-watchErrored isDirty = do
-  manager <- startManagerConf 
-                  defaultConfig {confUsePolling= True}
-
-  _ <- treeExtAny manager "." "hamlet"  (\_ -> atomically $ writeTVar isDirty True)
-  _ <- treeExtAny manager "." "shamlet" (\_ -> atomically $ writeTVar isDirty True)
-  _ <- treeExtAny manager "." "lucius"  (\_ -> atomically $ writeTVar isDirty True)
-  _ <- treeExtAny manager "." "julius"  (\_ -> atomically $ writeTVar isDirty True)
-  _ <- treeExtAny manager "." "hs"      (\_ -> atomically $ writeTVar isDirty True)
-  _ <- treeExtAny manager "." "lhs"      (\_ -> atomically $ writeTVar isDirty True)
-  _ <- treeExtAny manager "." "yaml"    (\_ -> atomically $ writeTVar isDirty True)
-
-  _ <- forever $ threadDelay maxBound
-  stopManager manager
-
 
 checkForChange :: TVar Bool -> IO ()
 checkForChange isDirty =

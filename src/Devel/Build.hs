@@ -63,7 +63,7 @@ build buildFile runFunction isReverseProxy sessionConfig (fromProxyPort, toProxy
       -- Listen for changes in the current working directory.
       isDirty <- newTVarIO False
 
-      _ <- forkIO $ watchErrored isDirty
+      _ <- forkIO $ watch isDirty includeTargets
 
       -- Block until relevant change is made then carry on with program execution.
       _ <- checkForChange isDirty

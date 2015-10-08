@@ -41,10 +41,9 @@ import Data.Monoid ((<>))
 import Devel.Paths
 import Devel.Types
 
-import  System.FilePath.Posix (takeExtension, splitPath)
-import Data.List (union, delete)
+import  System.FilePath.Posix (takeExtension)
+import Data.List (union, delete, isInfixOf)
 import Data.Maybe (fromMaybe)
-
 
 -- Initialize the compilation process.
 initCompile :: SessionConfig -> Maybe IdeSession -> IO (IdeSession, [GhcExtension], [FilePath])
@@ -64,27 +63,23 @@ initCompile sessionConfig mSession = do
 getSourceList :: [FilePath] -> [FilePath] -> IO [FilePath]
 getSourceList srcDir cabalSrcList = do
 
-  fileList' <- mapM getRecursiveContentsRelative srcDir
+  fileList' <- mapM getRecursiveContents srcDir
 
-  let isTest :: FilePath -> Bool
-      isTest fp = case splitPath fp of
-                    (x:_) -> x == "test/"
-                    []    -> False
-
-      -- Remove duplicate values. 
+  let -- Remove duplicate values. 
       fileList = foldr union [] fileList'
       -- Remove files in test dir.
-      fileListNoTests = filter (not.isTest) fileList
+
+      fileListNoTests = filter (not.(\x -> isInfixOf "test/" x || isInfixOf "cabal-sandbox/" x || isInfixOf "stack-work/" x)) fileList
 
       -- Add both lists together.
       fileListCombined = fileListNoTests ++ cabalSrcList
 
       -- Remove all non hs and non .lhs files.
       -- also remove "app/devel.hs" because it has an extra main function
-      sourceList = delete "app/devel.hs" $ 
-                          filter 
-                            (\f -> let ext = takeExtension f in ext == ".lhs" || ext == ".hs") 
-                            fileListCombined
+      sourceList' = filter 
+                      (\f -> let ext = takeExtension f in ext == ".lhs" || ext == ".hs") 
+                      fileListCombined
+      sourceList = delete "app/DevelMain.hs" $ delete "app/devel.hs" sourceList'
 
   return sourceList
 
@@ -97,13 +92,9 @@ compile session buildFile extensionList sourceList = do
                                       else buildFile : sourceList) :: Targets
       update = updateTargets targetList
                <> updateCodeGeneration True
-               <> updateGhcOpts (["-ddump-hi", "-ddump-to-file"] ++ ["-Wall"] ++ extensionList)
+               <> updateGhcOpts (["-Wall", "-ddump-hi", "-ddump-to-file"] ++ extensionList)
 
   return (session, update)
-
- 
-
-
 
 finishCompile :: (IdeSession, IdeSessionUpdate) -> IO (Either [SourceError'] IdeSession)
 finishCompile (session, update) = do

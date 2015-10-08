@@ -119,7 +119,7 @@ test-suite tests
   -- other-modules:       Tests.Watch
   hs-source-dirs:      tests
   build-depends:       base ==4.*
-                     , hspec
+                     , hspec >= 2.1 && < 3.0
                      , stm
                      , wai-devel
   default-language:    Haskell2010
