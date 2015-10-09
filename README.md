@@ -13,7 +13,7 @@ The wai-devel binary will now be in your ~/.local/bin you can use it freely.
 See the [wiki].
 
 ### Issues
-Doesn't autorecompile due to changes in Template Haskell files due to a bug .
+Doesn't autorecompile due to changes in Template Haskell files due to [this bug]:(https://github.com/fpco/ide-backend/issues/313).
 
 
 ### Coming next

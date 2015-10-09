@@ -29,7 +29,7 @@ library
                      , Devel.Modules
 
   -- other-extensions:
-  build-depends:       base ==4.*
+  build-depends:       base <5.0
                      , Cabal-ide-backend >= 1.23 && < 1.24
                      , Glob >= 0.7 && < 0.8
                      , MissingH >= 1.3 && < 1.4
@@ -118,8 +118,8 @@ test-suite tests
   -- exposed-modules:   
   -- other-modules:       Tests.Watch
   hs-source-dirs:      tests
-  build-depends:       base ==4.*
-                     , hspec
+  build-depends:       base <5.0
+                     , hspec >= 2.1 && < 3.0
                      , stm
                      , wai-devel
   default-language:    Haskell2010
