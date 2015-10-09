@@ -60,8 +60,8 @@ install:
   - ./travis_long stack --no-terminal --skip-ghc-check test --only-snapshot
 
 script:
-  - stack --no-terminal --skip-ghc-check build wai-devel
-  - stack --no-terminal --skip-ghc-check test wai-devel
+  - stack --no-terminal --skip-ghc-check build
+  - stack --no-terminal --skip-ghc-check test
 
 cache:
   directories:
