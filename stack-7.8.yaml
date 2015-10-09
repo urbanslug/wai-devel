@@ -1,4 +1,5 @@
 flags: {}
-packages: []
+packages:
+- '.'
 extra-deps: []
 resolver: lts-2.22
