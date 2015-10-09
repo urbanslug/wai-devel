@@ -1,5 +1,4 @@
 flags: {}
 packages: []
-extra-deps: 
-- base-4.7.0.2
+extra-deps: []
 resolver: lts-2.22
