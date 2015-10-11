@@ -6,3 +6,9 @@
 - Removed example cats/
 - Cleans up after ghc's -ddump-hi -ddump-to-file
 - Fixed [issue #3](https://github.com/urbanslug/wai-devel/issues/3)
+
+### 11 Oct 2015
+
+- Added support for cabal binary.
+- Can find dependencies from stack's extra-deps field of stack.yaml
+- Added better test coverage.

@@ -26,7 +26,8 @@ buildAndRun buildFile runFunction isReverseProxy = do
   -- set Environment variables: GHC_PACKAGE_PATH and PATH
   -- Needed for ide-backend to provide sessionConfig
   _ <- setConfig
-  
+
+
   -- | Let ide-backend set session config now because ide-backend can't set it during rebuilds.
   -- We then pass sessionConfig around between rebuilds
   -- You must restart wai-devel in the terminal for it to get a new session config
