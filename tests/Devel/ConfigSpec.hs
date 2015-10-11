@@ -16,13 +16,13 @@ spec = do
     it "Gives an empty string when bin-path isn't in the association list" $
       getPath ("not-bin-path", "ghc-paths: ~/not/bin/path") `shouldBe` ""
       
-    it "Able to extract snapshot-pkg-db (GHC_PACKAGE_PATH) whe it's part of the association list" $ 
+    it "Able to extract ghc-package-path (GHC_PACKAGE_PATH) whe it's part of the association list" $ 
       -- wut?
-      getPkgDb ("snapshot-pkg-db", "snapshot-pkg-db: ~/pkg/db/found") `shouldBe` "snapshot-pkg-db:~/pkg/db/found"
+      getPkgDb ("ghc-package-path", "ghc-package-path: ~/pkg/db/found") `shouldBe` "ghc-package-path:~/pkg/db/found"
 
     it "Gives an empty string when snapshot-pkg-db isn't in the association list" $
       getPkgDb ("not-snapshot-pkg-db", "ghc-paths: ~/not/pkg/db") `shouldBe` ""
-      
+
 
   describe "setConfig doesn't throw an exception." $
     it "setConfig gives back a unit ()." $ do
