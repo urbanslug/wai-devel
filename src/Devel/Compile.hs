@@ -27,6 +27,7 @@ import IdeSession
 -- From Cabal-ide-backend
 -- for parsing the cabal file and extracting lang extensions used.
 import Distribution.PackageDescription
+import Distribution.ModuleName
 import Distribution.PackageDescription.Parse
 import Distribution.PackageDescription.Configuration
 import Language.Haskell.Extension
@@ -41,9 +42,11 @@ import Data.Monoid ((<>))
 import Devel.Paths
 import Devel.Types
 
-import  System.FilePath.Posix (takeExtension)
-import Data.List (union, delete, isInfixOf)
+import System.FilePath.Posix (takeExtension, pathSeparator)
+import System.Directory (doesFileExist)
+import Data.List (union, delete, isInfixOf, nub)
 import Data.Maybe (fromMaybe)
+import Control.Monad (filterM)
 
 -- Initialize the compilation process.
 initCompile :: SessionConfig -> Maybe IdeSession -> IO (IdeSession, [GhcExtension], [FilePath])
@@ -79,9 +82,12 @@ getSourceList srcDir cabalSrcList = do
       sourceList' = filter 
                       (\f -> let ext = takeExtension f in ext == ".lhs" || ext == ".hs") 
                       fileListCombined
-      sourceList = delete "app/DevelMain.hs" $ delete "app/devel.hs" sourceList'
+      -- nub to remove duplicates yet again.
+      sourceList = nub $ delete "app/DevelMain.hs" $ delete "app/devel.hs" sourceList'
+
 
   return sourceList
+
 
 compile :: IdeSession -> FilePath -> [GhcExtension] -> [FilePath] -> IO (IdeSession, IdeSessionUpdate)
 compile session buildFile extensionList sourceList = do
@@ -95,6 +101,7 @@ compile session buildFile extensionList sourceList = do
                <> updateGhcOpts (["-Wall", "-ddump-hi", "-ddump-to-file"] ++ extensionList)
 
   return (session, update)
+
 
 finishCompile :: (IdeSession, IdeSessionUpdate) -> IO (Either [SourceError'] IdeSession)
 finishCompile (session, update) = do
@@ -112,6 +119,7 @@ finishCompile (session, update) = do
   return $ case errorList of
     [] -> Right session
     _  -> Left  errorList
+
 
 -- -----------------------------------------------------------
 --   Utility functions.
@@ -135,8 +143,8 @@ getExtensions = do
 
       lib = fromMaybe emptyLibrary $ library packDescription
 
-  -- I think it would be wise to avoid src files under executable to avoid conflict.
-  let srcDir  = hsSourceDirs $ libBuildInfo lib
+      -- I think it would be wise to avoid src files under executable to avoid conflict.
+      srcDir  = hsSourceDirs $ libBuildInfo lib
       srcList = extraSrcFiles packDescription
 
 
@@ -147,7 +155,27 @@ getExtensions = do
 
       extensions = map parseExtension rawExt
 
-  return (extensions, srcDir, srcList)
+      -- Now we handle source files from executable section here.
+      execList = executables packDescription
+  
+  paths <- mapM getPathList execList 
+
+  return (extensions, srcDir, (srcList ++ (concat paths)))
+  where 
+    getPathList :: Executable -> IO [FilePath]
+    getPathList exec =
+      let mainModule' = modulePath exec
+          bInfo = buildInfo exec
+          execModuleList = otherModules bInfo
+          srcDirsList = hsSourceDirs bInfo
+          execSrcFileList = map toFilePath execModuleList
+          nonPaths = [dir ++ (pathSeparator : fp) | fp <- execSrcFileList, dir <- srcDirsList]
+          paths' = map (++ (pathSeparator : mainModule') ) srcDirsList -- For the main module
+                   ++ [x++y | x <- nonPaths, y <- [".hs", ".lhs"]]
+
+      in filterM doesFileExist paths'
+
+
 
 -- | Remove the warnings from [SourceError] if any.
 -- Return an empty list if there are no errors and only warnings
