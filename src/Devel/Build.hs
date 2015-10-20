@@ -102,7 +102,7 @@ run session buildFile runFunction = do
   -- Get the module name from the file path
   mapFunction <- getFileMap session
   buildModule <- case mapFunction buildFile of
-                   Nothing -> fail $ "The file's module name for: " ++ (show buildFile) ++" couldn't be found"
+                   Nothing -> fail $ "The file's module name for: " ++ show buildFile ++" couldn't be found"
                    Just moduleId -> return $ unpack $ moduleName moduleId
 
   -- Run the given ide-backend session.

@@ -1,6 +1,6 @@
 {-|
 Module      : Devel.ReverseProxy
-Description : Reverse proxies and starts warp on localhost:<PORT>.
+Description : Reverse proxies and starts warp on localhost:\<PORT\>.
 Copyright   : (c)
 License     : GPL-3
 Maintainer  : njagi@urbanslug.com

@@ -1,6 +1,6 @@
 {-|
 Module      : Main
-Description : So that it can work as an executable.
+Description : The main module of the executable.
 Copyright   : (c)
 License     : GPL-3
 Maintainer  : njagi@urbanslug.com

@@ -48,7 +48,7 @@ import Data.List (union, delete, isInfixOf, nub)
 import Data.Maybe (fromMaybe)
 import Control.Monad (filterM)
 
--- Initialize the compilation process.
+-- |Initialize the compilation process.
 initCompile :: SessionConfig -> Maybe IdeSession -> IO (IdeSession, [GhcExtension], [FilePath])
 initCompile sessionConfig mSession = do
   -- Initialize the session
@@ -89,6 +89,7 @@ getSourceList srcDir cabalSrcList = do
   return sourceList
 
 
+-- | Contains code regarding target files and coming up with the IdeSession update.
 compile :: IdeSession -> FilePath -> [GhcExtension] -> [FilePath] -> IO (IdeSession, IdeSessionUpdate)
 compile session buildFile extensionList sourceList = do
 
@@ -103,6 +104,7 @@ compile session buildFile extensionList sourceList = do
   return (session, update)
 
 
+-- |The final part of the compilation process.
 finishCompile :: (IdeSession, IdeSessionUpdate) -> IO (Either [SourceError'] IdeSession)
 finishCompile (session, update) = do
   _ <- updateSession session update print
