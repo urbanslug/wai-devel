@@ -1,5 +1,5 @@
 name:                wai-devel
-version:             0.1.0.0
+version:             0.0.0.1
 synopsis:            Development web server for haskell web applications that are wai compliant.
 description:         A development server for WAI applications.
 homepage:            https://github.com/urbanslug/wai-devel
@@ -22,7 +22,6 @@ library
                      , Devel.ReverseProxy
                      , Devel.Config
   other-modules:       Devel.Build
-                     , Devel.WebSockets
                      , Devel.Types
                      , Devel.Compile
                      , Devel.Paths
