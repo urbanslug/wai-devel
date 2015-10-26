@@ -7,14 +7,14 @@ Maintainer  : njagi@urbanslug.com
 Stability   : experimental
 Portability : POSIX
 -}
-module Main where
+module DevelMain where
 
 import Devel
 import Devel.CmdArgs
 import Options.Applicative
 
-main :: IO ()
-main = do
+develMain :: IO ()
+develMain = do
   cmdArgs' <- execParser opts
 
   let isReverseProxy' = isReverseProxy cmdArgs'
