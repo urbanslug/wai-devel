@@ -19,9 +19,10 @@ develMain = do
 
   let isReverseProxy' = isReverseProxy cmdArgs'
       buildFile' = buildFile cmdArgs'
+      watchDirectories' = filter (/= "") $ watchDirectories cmdArgs'
       runFunction' = runFunction cmdArgs'
 
-  buildAndRun buildFile' runFunction' isReverseProxy'
+  buildAndRun buildFile' runFunction' watchDirectories' isReverseProxy'
   where opts :: ParserInfo CmdArgs
         opts = info (helper <*> cmdArgs)
                 (fullDesc

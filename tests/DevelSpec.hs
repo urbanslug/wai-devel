@@ -16,8 +16,7 @@ spec = -- How does one test that a bottom effectful computation has done what is
     it "buildAndRun is able to pick up the value of PORT" $
       pendingWith "Is it even possible to test for this?"
     it "Successfully calls build. Does not throw an exception." $ do
-      tId <- forkIO $ buildAndRun "Application.hs" "develMain" True
+      tId <- forkIO $ buildAndRun "Application.hs" "develMain" [] True
       threadDelay 100
       killThread tId
       tId `shouldBe` tId
-
