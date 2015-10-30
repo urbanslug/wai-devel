@@ -16,7 +16,7 @@ cabal-version:       >=1.10
 library
   ghc-options:         -Wall
   exposed-modules:     Devel
-                     , Main
+                     , DevelMain
                      , Devel.Watch
                      , Devel.CmdArgs
                      , Devel.ReverseProxy
@@ -65,49 +65,12 @@ library
 executable wai-devel
   ghc-options:         -Wall
   main-is:             Main.hs
-  other-modules:       Devel
-                       Devel.CmdArgs
-                       Devel.Build
-                       Devel.Compile
-                       Devel.Config
-                       Devel.Modules
-                       Devel.Paths
-                       Devel.ReverseProxy
-                       Devel.Types
-                       Devel.Watch
+  other-modules:      
   -- other-extensions:
   build-depends:       base
-                     , Cabal-ide-backend
-                     , Glob
-                     , MissingH
-                     , blaze-html
-                     , bytestring
-                     , directory
-                     , filepath
-                     , fsnotify
-                     , ghc
-                     , http-client
-                     , http-conduit
-                     , http-reverse-proxy
-                     , http-types
-                     , ide-backend
-                     , network
-                     , optparse-applicative
-                     , process
-                     , shakespeare
-                     , stm
-                     , streaming-commons
-                     , system-filepath
-                     , text
-                     , time
-                     , transformers
-                     , wai
                      , wai-devel
-                     , warp
-                     , file-embed
-                     , websockets
 
-  hs-source-dirs:      src
+  hs-source-dirs:      app
   default-language:    Haskell2010
 
 test-suite tests
