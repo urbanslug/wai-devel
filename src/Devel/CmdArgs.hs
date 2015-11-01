@@ -12,14 +12,16 @@ module Devel.CmdArgs
 ,  CmdArgs (..)
 ) where
 
-import Options.Applicative
+import           Data.List.Split     (splitOn)
+import           Options.Applicative
 
 -- | Command line arguments for yesod devel.
 -- All arguments are optional.
 data CmdArgs = CmdArgs
-  { buildFile :: FilePath
-  , runFunction :: String
-  , isReverseProxy :: Bool -- By default reverse proxy should be True 
+  { buildFile        :: FilePath
+  , runFunction      :: String
+  , watchDirectories :: [String]
+  , isReverseProxy   :: Bool -- By default reverse proxy should be True
   } deriving (Show, Eq)
 
 cmdArgs :: Parser CmdArgs
@@ -36,8 +38,13 @@ cmdArgs = CmdArgs
                  <> value "develMain"
                  <> metavar "FUNCTION"
                  <> help "The function you want run. Default is `develMain`.")
+        <*>  (splitOn "," <$> strOption
+                                (long "watch-directories"
+                                  <> short 'w'
+                                  <> value []
+                                  <> metavar "DIRECTORY-LIST"
+                                  <> help "A comma-separated list of directories to watch for any changes (not just .hs files)."))
         <*> flag True False
               (long "no-reverse-proxy"
                 <> short 'r'
                 <> help "use `-r` to disable reverse proxying." )
-        
