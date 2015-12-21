@@ -1,8 +1,8 @@
 {-|
 Module      : Devel.Paths
 Description : For filepath related matters.
-Copyright   : (c)
-License     : GPL-3
+Copyright   : (c) 2015 Njagi Mwaniki
+License     : MIT
 Maintainer  : njagi@urbanslug.com
 Stability   : experimental
 Portability : POSIX

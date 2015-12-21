@@ -1,8 +1,8 @@
 {-|
 Module      : Devel.Compile
 Description : For building and running your WAI application.
-Copyright   : (c)
-License     : GPL-3
+Copyright   : (c) 2015 Njagi Mwaniki
+License     : MIT
 Maintainer  : njagi@urbanslug.com
 Stability   : experimental
 Portability : POSIX
@@ -35,10 +35,10 @@ import Devel.Watch
 
 
 -- | Compiles and calls run on your WAI application.
-build :: FilePath -> String ->  Bool -> SessionConfig -> (Int, Int) -> Maybe IdeSession -> Bool -> IO ()
-build buildFile runFunction isReverseProxy sessionConfig (fromProxyPort, toProxyPort) mSession isRebuild = do
+build :: FilePath -> String ->  [String] -> Bool -> SessionConfig -> (Int, Int) -> Maybe IdeSession -> Bool -> IO ()
+build buildFile runFunction watchDirectories isReverseProxy sessionConfig (fromProxyPort, toProxyPort) mSession isRebuild = do
 
-  (initialSession, extensionList, includeTargets) <- initCompile sessionConfig mSession
+  (initialSession, extensionList, includeTargets, additionalWatch) <- initCompile watchDirectories sessionConfig mSession
 
   -- Do this if isRebuild is False.
   unless isRebuild $
@@ -51,7 +51,7 @@ build buildFile runFunction isReverseProxy sessionConfig (fromProxyPort, toProxy
                  show fromProxyPort
 
 
-  (updatedSession, update) <- 
+  (updatedSession, update) <-
     if isRebuild
        then return (initialSession, mempty)
        else compile initialSession buildFile extensionList includeTargets
@@ -63,18 +63,16 @@ build buildFile runFunction isReverseProxy sessionConfig (fromProxyPort, toProxy
       -- Listen for changes in the current working directory.
       isDirty <- newTVarIO False
 
-      _ <- forkIO $ watch isDirty includeTargets
+      _ <- forkIO $ watch isDirty includeTargets additionalWatch
 
       -- Block until relevant change is made then carry on with program execution.
       _ <- checkForChange isDirty
 
       -- Stop the current app.
       putStrLn "\n\nRebuilding...\n\n"
-      
       _ <- shutdownSession updatedSession
-
       -- Coming to fix.
-      build buildFile runFunction False sessionConfig (fromProxyPort, toProxyPort) Nothing False
+      build buildFile runFunction watchDirectories False sessionConfig (fromProxyPort, toProxyPort) Nothing False
 
     Right session -> do
       -- run the session
@@ -84,17 +82,17 @@ build buildFile runFunction isReverseProxy sessionConfig (fromProxyPort, toProxy
       isDirty <- newTVarIO False
 
       -- Watch for changes in the current working directory.
-      watchId <- forkIO $ watch isDirty includeTargets
+      watchId <- forkIO $ watch isDirty includeTargets additionalWatch
 
       -- Block until relevant change is made then carry on with program execution.
       _ <- checkForChange isDirty
 
       killThread watchId
-      
+
       -- Stop the current app.
       _ <- stopApp runActionsRunResult threadId
       putStrLn "\n\nRebuilding...\n\n"
-      build buildFile runFunction isReverseProxy sessionConfig (fromProxyPort, toProxyPort) (Just session) True
+      build buildFile runFunction watchDirectories isReverseProxy sessionConfig (fromProxyPort, toProxyPort) (Just session) True
 
 
 run :: IdeSession -> FilePath -> String -> IO (RunActions RunResult, ThreadId)

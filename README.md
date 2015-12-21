@@ -1,4 +1,6 @@
 ### wai-devel
+[![Build Status](https://travis-ci.org/urbanslug/wai-devel.svg?branch=master)](https://travis-ci.org/urbanslug/wai-devel)
+
 Development server for [WAI] compliant haskell web applications.
 
 ### Installation

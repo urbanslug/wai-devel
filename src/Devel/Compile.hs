@@ -1,8 +1,8 @@
 {-|
 Module      : Devel.Compile
 Description : Attempts to compile the WAI application.
-Copyright   : (c)
-License     : GPL-3
+Copyright   : (c) 2015 Njagi Mwaniki
+License     : MIT
 Maintainer  : njagi@urbanslug.com
 Stability   : experimental
 Portability : POSIX
@@ -49,8 +49,8 @@ import Data.Maybe (fromMaybe)
 import Control.Monad (filterM)
 
 -- |Initialize the compilation process.
-initCompile :: SessionConfig -> Maybe IdeSession -> IO (IdeSession, [GhcExtension], [FilePath])
-initCompile sessionConfig mSession = do
+initCompile :: [String] -> SessionConfig -> Maybe IdeSession -> IO (IdeSession, [GhcExtension], [FilePath], [FilePath])
+initCompile watchDirectories sessionConfig mSession = do
   -- Initialize the session
   session <- case mSession of
                Just session -> return session
@@ -61,7 +61,8 @@ initCompile sessionConfig mSession = do
   -- This is "rebuilding" the cabal file.
   (extensionList, srcDir, cabalSrcList) <- getExtensions
   sourceList <- getSourceList srcDir cabalSrcList
-  return (session, extensionList, sourceList)
+  additionalWatchList <- fmap concat (mapM getRecursiveContents watchDirectories)
+  return (session, extensionList, sourceList, additionalWatchList)
 
 getSourceList :: [FilePath] -> [FilePath] -> IO [FilePath]
 getSourceList srcDir cabalSrcList = do

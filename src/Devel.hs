@@ -1,8 +1,8 @@
 {-|
 Module      : Devel
 Description : An entry point for GHC to compile yesod-devel.
-Copyright   : (c)
-License     : GPL-3
+Copyright   : (c) 2015 Njagi Mwaniki
+License     : MIT
 Maintainer  : njagi@urbanslug.com
 Stability   : experimental
 Portability : POSIX
@@ -19,8 +19,8 @@ import Devel.ReverseProxy (cyclePorts)
 import Devel.Build (build)
 
 -- | Build and run our haskell application.
-buildAndRun :: FilePath -> String ->  Bool -> IO ()
-buildAndRun buildFile runFunction isReverseProxy = do
+buildAndRun :: FilePath -> String -> [String] ->  Bool -> IO ()
+buildAndRun buildFile runFunction watchDirectories isReverseProxy = do
 
   -- set Environment variables: GHC_PACKAGE_PATH and PATH
   -- Needed for ide-backend to provide sessionConfig
@@ -54,7 +54,8 @@ buildAndRun buildFile runFunction isReverseProxy = do
   build
     buildFile -- The target file, should contain the function we wish to call.
     runFunction -- The function we want to call.
-    isReverseProxy -- Use reverse proxying? Default to True. 
+    watchDirectories -- Other directories to watch for file changes in.
+    isReverseProxy -- Use reverse proxying? Default to True.
     sessionConfig -- We need this when compiling.
     (fromProxyPort, toProxyPort) -- The port we reverse proxy to and from.
     Nothing -- Maybe IdeSession

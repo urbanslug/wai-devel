@@ -1,8 +1,8 @@
 {-|
 Module      : Devel.Watch
 Description : Watch for changes in the current working direcory.
-Copyright   : (c)
-License     : GPL-3
+Copyright   : (c) 2015 Njagi Mwaniki
+License     : MIT
 Maintainer  : njagi@urbanslug.com
 Stability   : experimental
 Portability : POSIX
@@ -36,13 +36,14 @@ import System.FilePath (pathSeparator)
 
 import Devel.Paths
 
-watch :: TVar Bool -> [FilePath] -> IO ()
-watch isDirty includeTargets = do
+watch :: TVar Bool -> [FilePath] ->  [FilePath] -> IO ()
+watch isDirty watchSource watchOther = do
   -- Get files to watch.
-  files <- getFilesToWatch includeTargets
+  files <- getFilesToWatch watchSource
   -- Making paths to watch a list of absolute paths.
   dir <- getCurrentDirectory
-  let pathsToWatch = map (\fp -> dir ++ (pathSeparator: fp)) files
+  let sourceToWatch = map (\fp -> dir ++ (pathSeparator: fp)) files
+  let otherToWatch = map (\fp -> dir ++ (pathSeparator: fp)) watchOther
 
   -- Actual file watching.
   manager <- startManagerConf defaultConfig
@@ -54,20 +55,20 @@ watch isDirty includeTargets = do
                 getPath (Added fp _)    = fp
                 getPath (Modified fp _) = fp
                 getPath (Removed fp _)  = fp
-                
-                isModified = getPath event `elem` pathsToWatch
-                
-            atomically $ writeTVar isDirty isModified)
-            
+
+                isModified = getPath event `elem` (sourceToWatch ++ otherToWatch)
+            atomically $ do readTVar isDirty >>= check . not
+                            writeTVar isDirty isModified)
+
 #else
-         (\event -> do 
+         (\event -> do
             pathMod' <- case toText $ eventPath event of
                             Right text -> return $ unpack text -- Gives an abs path
                             Left text -> fail $ unpack text
-                            
-            let isModified = pathMod' `elem` pathsToWatch
-            
-            atomically $ writeTVar isDirty isModified)
+
+            let isModified = pathMod' `elem` (sourceToWatch ++ otherToWatch)
+            atomically $ do readTVar isDirty >>= check . not
+                            writeTVar isDirty isModified)
 #endif
 
   _ <- forever $ threadDelay maxBound
