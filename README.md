@@ -1,4 +1,6 @@
 ### wai-devel
+
+[![Join the chat at https://gitter.im/urbanslug/wai-devel](https://badges.gitter.im/urbanslug/wai-devel.svg)](https://gitter.im/urbanslug/wai-devel?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Build Status](https://travis-ci.org/urbanslug/wai-devel.svg?branch=master)](https://travis-ci.org/urbanslug/wai-devel)
 
 Development server for [WAI] compliant haskell web applications.
