@@ -5,82 +5,80 @@
     <title>Building wai-devel</title>
     <style>
       body {
-      background: #e6e6e6;
-      color: #444;
-      text-shadow: 1px 1px 1px #ffffff;
-      font-size: 30px;
-      font-family: georgia, serif;
+        background: #e6e6e6;
+        color: #444;
+        text-shadow: 1px 1px 1px #ffffff;
+        font-size: 30px;
+        font-family: georgia, serif;
       }
       .wrap {
-      margin: auto;
-      width: 25em;
+        margin: auto;
+        width: 75%;
+      }
+      #build-log {
+        background: white;
+        color: black;
+        margin: auto;
+        width: 70%;
+        font-size: medium;
+      }
+      #build-log, ul {
+        list-style: none;
       }
       h1 {
-      margin-bottom: 0;
+        margin-bottom: 0;
       }
       h2 {
-      margin-top: 0;
-      font-size: 1em;
-      font-style: italic;
-      color: #546369;
+        margin-top: 0;
+        font-size: large;
+        font-style: italic;
+        color: #546369;
       }
       header {
-      margin-top: 1em;
-      padding-bottom: 0.25em;
-      border-bottom: 1px solid #ccc;
-      color: #1a6e8e;
+        padding-bottom: 0.25em;
+        border-bottom: 1px solid #ccc;
+        color: #1a6e8e;
       }
       footer {
-      margin-top: 3em;
-      padding-top: 0.25em;
-      border-top: 1px solid #ccc;
-      color: #666;
-      font-size: 0.8em;
+        color: black;
+        text-align: center;
+        width: 70%;
+        position: absolute;
+        border-top: 1px solid #ccc;
+        padding: 12px 0px 12px 0px;
+	      bottom:0;
+        z-index: 1;
+        font-size: small;
       }
-      .msgs {
-      font-size: 0.9em;
-      }
-      .msgs p {
-      margin-bottom: 0.5em;
-      }
-      .msgs ul {
-      margin-top: 0;
-      line-height: 1.7em;
-      }
-      .msgs li {
-      padding-left: 0.5em;
-      }
+
     </style>
   </head>
   <body>
     <div class="wrap">
       <header><small>wai-devel</small></header>
-      <h1>The application isn’t built</h1>
-      <h2>We’ll keep trying to refresh every second</h2>
-      <div class="msgs">
-        <script> document.getElementsByClassName("msgs")[0].style.display = "none"; </script>
-        <p>Meanwhile, here is a motivational message:</p>
-        <ul>
-          <li>You are a beautiful person making a beautiful web site.</li>
-          <li>Keep going, you’ve nearly fixed the bug!</li>
-          <li>Check your posture, don’t lean over too much.</li>
-          <li>Get a glass of water, keep hydrated.</li>
+      <h2>We’re building your application.</h2>
+      <div id="build-log">
+        <ul id="build-log-ul">
         </ul>
-      </div>
+      </div><!-- build-log -->
+      
       <script>
-        var msg = document.getElementsByClassName("msgs")[0];
-        var lis = Array.prototype.slice.call(msg.querySelectorAll("li"));
-        lis.forEach(function(li){ li.style.display = "none"; });
-        lis[Math.floor(Math.random() * lis.length)].style.display = "block";
-        msg.style.display = "block";
+        var buildLogSocket = new WebSocket("ws://127.0.0.1:5002");
+        li = "Poo bear";
+        buildLogSocket.onmessage = function (event) {
+          var li = document.createElement("li");
+          
+          sessionStorage.setItem("foo", event.data);
+          console.log(sessionStorage.getItem("foo"));
+
+          li.innerHTML = "poobear" //sessionStorage.getItem("foo");
+          document.getElementById("build-log-ul").appendChild(li);
+          
+        }
+
       </script>
-      <footer>
-        <small>
-          <script>
-            document.write(new Date())
-          </script>
-        </small>
-      </footer>
-    </div>
+
+      <footer>Made in Nairobi with love.</footer>
+    </div><!-- wrap -->
   </body>
 </html>

@@ -19,6 +19,7 @@ module Devel.Compile
 , finishCompile
 ) where
 
+-- import Devel.WebSockets (runWsServer)
 
 -- The backbone library of ide-backend.
 -- Almost everything is dependent on ide-backend.
@@ -33,7 +34,7 @@ import Distribution.PackageDescription.Configuration
 import Language.Haskell.Extension
 
 -- Used internally for showing errors.
-import Data.Text (unpack)
+import Data.Text (unpack, pack)
 
 -- Utility functions
 import Data.Monoid ((<>))
@@ -47,6 +48,21 @@ import System.Directory (doesFileExist)
 import Data.List (union, delete, isInfixOf, nub)
 import Data.Maybe (fromMaybe)
 import Control.Monad (filterM)
+
+-- WS stuff
+import qualified Network.WebSockets as WS
+import Control.Concurrent -- (forkIO, MVar)
+import qualified Data.Text as T
+
+import Network.Socket
+import Data.Streaming.Network (bindPortTCP)
+import qualified Network.Wai as Wai
+import Network.HTTP.Types (status200)
+import qualified Network.Wai.Handler.WebSockets as WW
+import qualified Network.Wai.Handler.Warp as Warp
+import qualified Network.Socket as Socket
+
+import Devel.ReverseProxy (checkPort)
 
 -- |Initialize the compilation process.
 initCompile :: [String] -> SessionConfig -> Maybe IdeSession -> IO (IdeSession, [GhcExtension], [FilePath], [FilePath])
@@ -108,8 +124,46 @@ compile session buildFile extensionList sourceList = do
 -- |The final part of the compilation process.
 finishCompile :: (IdeSession, IdeSessionUpdate) -> IO (Either [SourceError'] IdeSession)
 finishCompile (session, update) = do
-  _ <- updateSession session update print
 
+  mUpd <- newEmptyMVar :: IO (MVar String)
+
+  let printToBrowser :: UpdateStatus -> IO ()
+      printToBrowser upd' = let upd = show upd'
+                            in putMVar mUpd upd
+
+      handleConnection :: WS.PendingConnection -> IO () -- :: ServerApp
+      handleConnection pending = do
+        conn <- WS.acceptRequest pending
+        loop conn
+        where loop :: WS.Connection -> IO () 
+              loop conn' = do
+                upd <- takeMVar mUpd
+                WS.sendTextData conn' $ T.pack upd
+                putStrLn upd
+                loop conn'
+  
+      backupApp :: Wai.Application
+      backupApp _ respond = respond $ Wai.responseLBS status200 [] "Please make a WebSocket request."
+
+      app :: Wai.Application 
+      app = WW.websocketsOr WS.defaultConnectionOptions handleConnection backupApp
+
+  notBound <- checkPort 5002
+  
+  if notBound
+     then do
+       sock <- createSocket 5002
+       tId <- forkIO $ Warp.runSettingsSocket Warp.defaultSettings sock app 
+       _ <- updateSession session update printToBrowser
+       killThread tId
+       Socket.close sock
+     else 
+       updateSession session update print
+
+  -- tId <- forkIO $ WS.runServer "127.0.0.1" 5002 handleConnection
+
+  
+  
   -- Customizing error showing.
   errorList' <- getSourceErrors session
   let errorList = case filterErrors errorList' of
@@ -117,7 +171,12 @@ finishCompile (session, update) = do
                     _  -> prettyPrintErrors errorList'
 
   -- We still want to see errors and warnings on the terminal.
+  mapM_ (putMVar mUpd) (prettyPrintErrors errorList')
   mapM_ putStrLn $ prettyPrintErrors errorList'
+
+  case prettyPrintErrors errorList' of
+    [] -> return ()
+    _ -> shutdownSession session
 
   return $ case errorList of
     [] -> Right session
@@ -127,6 +186,25 @@ finishCompile (session, update) = do
 -- -----------------------------------------------------------
 --   Utility functions.
 -- -----------------------------------------------------------
+
+createSocket :: Int -> IO Socket
+createSocket port = do
+  sock <- bindPortTCP port "*4"
+
+  -- Tell the OS *not* to reserve the socket after your program exits.
+  setSocketOption sock ReuseAddr 1
+
+  return sock
+
+-- updateSession :: IdeSession -> IdeSessionUpdate -> (Progress -> IO ()) -> IO ()
+-- updateSession https://hackage.haskell.org/package/ide-backend-0.9.0.11/docs/IdeSession.html#v:updateSession
+-- Progress https://hackage.haskell.org/package/ide-backend-0.9.0.11/docs/IdeSession.html#t:Progress
+{-
+printToBrowser :: UpdateStatus -> IO ()
+printToBrowser update = do
+  print update
+  runWsServer $ pack $ show update
+-}
 
 -- | Parse the cabal file to get the ghc extensions in use.
 getExtensions :: IO ([GhcExtension], [FilePath], [FilePath])
