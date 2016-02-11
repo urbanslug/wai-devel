@@ -48,6 +48,8 @@ import Data.List (union, delete, isInfixOf, nub)
 import Data.Maybe (fromMaybe)
 import Control.Monad (filterM)
 
+import Data.IORef
+
 -- |Initialize the compilation process.
 initCompile :: [String] -> SessionConfig -> Maybe IdeSession -> IO (IdeSession, [GhcExtension], [FilePath], [FilePath])
 initCompile watchDirectories sessionConfig mSession = do
@@ -90,7 +92,7 @@ getSourceList srcDir cabalSrcList = do
   return sourceList
 
 
--- | Contains code regarding target files and coming up with the IdeSession update.
+-- | Determining the target files and creating the session update.
 compile :: IdeSession -> FilePath -> [GhcExtension] -> [FilePath] -> IO (IdeSession, IdeSessionUpdate)
 compile session buildFile extensionList sourceList = do
 
@@ -105,10 +107,18 @@ compile session buildFile extensionList sourceList = do
   return (session, update)
 
 
--- |The final part of the compilation process.
-finishCompile :: (IdeSession, IdeSessionUpdate) -> IO (Either [SourceError'] IdeSession)
-finishCompile (session, update) = do
-  _ <- updateSession session update print
+-- |Finalising compilation process.
+finishCompile :: (IdeSession, IdeSessionUpdate) -> IORef [String] -> IO (Either [SourceError'] IdeSession)
+finishCompile (session, update) iStrLst = do
+
+  let printer upLst = do
+        lstt <- readIORef iStrLst
+        let str    = show upLst
+            newLst = lstt ++ [str]
+        _ <- putStrLn str
+        writeIORef iStrLst newLst
+        
+  _ <- updateSession session update printer
 
   -- Customizing error showing.
   errorList' <- getSourceErrors session
@@ -117,7 +127,13 @@ finishCompile (session, update) = do
                     _  -> prettyPrintErrors errorList'
 
   -- We still want to see errors and warnings on the terminal.
-  mapM_ putStrLn $ prettyPrintErrors errorList'
+  let prettyErrors = prettyPrintErrors errorList'
+      errorsToBrowser = do
+        lstt <- readIORef iStrLst
+        writeIORef iStrLst $ lstt ++ prettyErrors
+
+  _ <- errorsToBrowser
+  mapM_ putStrLn $ prettyErrors
 
   return $ case errorList of
     [] -> Right session

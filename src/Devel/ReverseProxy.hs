@@ -7,7 +7,7 @@ Maintainer  : njagi@urbanslug.com
 Stability   : experimental
 Portability : POSIX
 
-Reverse proxying and other socket realated activities.
+Reverse proxying and other network realated activities.
 -}
 {-# LANGUAGE OverloadedStrings, ScopedTypeVariables, TemplateHaskell #-}
 module Devel.ReverseProxy 
@@ -22,36 +22,38 @@ import Network.HTTP.ReverseProxy (WaiProxyResponse(WPRProxyDest), ProxyDest(Prox
 import Network.HTTP.Client (newManager, defaultManagerSettings)
 import Network.HTTP.Types (status200)
 
--- import Network.Wai.Handler.Warp (runSettingsSocket, defaultSettings, run)
+
 import Network.Wai.Handler.Warp (run)
 import Control.Exception
 
 import Network.Socket
 import Data.Streaming.Network (bindPortTCP)
 
-import qualified Data.ByteString.Lazy as LB
-import Data.FileEmbed        (embedFile)
 import Network.Wai (Application, responseLBS)
 
+import Data.IORef
+import Text.Hamlet
+import Text.Blaze.Html.Renderer.Utf8 (renderHtml)
 
 
-startReverseProxy :: (Int, Int) -> IO ()
-startReverseProxy  (fromProxyPort, toProxyPort) = do
+startReverseProxy :: (Int, Int) -> IORef [String] -> IO ()
+startReverseProxy  (fromProxyPort, toProxyPort) iStrLst = do
   mgr <- newManager defaultManagerSettings
 
   let onException' :: SomeException -> Application
-      onException' _ _ respond = do
-        let refreshHtml = LB.fromChunks $ return $(embedFile "refreshing.html")
+      onException' _ _ respond =do
+        lstt <- readIORef iStrLst
         respond $ responseLBS status200
                               [ ("content-type", "text/html")
                               , ("Refresh", "1")
                               ]
-                              refreshHtml
+                              (renderHtml $(shamletFile "build.hamlet"))
 
-  let proxyApp = waiProxyTo
-                   (\_ -> return $ WPRProxyDest $ ProxyDest "0.0.0.0" toProxyPort)
-                   onException'
-                   mgr
+
+      proxyApp = waiProxyTo
+                      (\_ -> return $ WPRProxyDest $ ProxyDest "0.0.0.0" toProxyPort)
+                      onException'
+                      mgr
 
   -- runSettingsSocket defaultSettings sock proxyApp
   run fromProxyPort proxyApp

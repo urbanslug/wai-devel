@@ -18,6 +18,8 @@ import Devel.Config (setConfig)
 import Devel.ReverseProxy (cyclePorts)
 import Devel.Build (build)
 
+import Data.IORef
+
 -- | Build and run our haskell application.
 buildAndRun :: FilePath -> String -> [String] ->  Bool -> IO ()
 buildAndRun buildFile runFunction watchDirectories isReverseProxy = do
@@ -50,6 +52,8 @@ buildAndRun buildFile runFunction watchDirectories isReverseProxy = do
      then setEnv "PORT" (show toProxyPort)
      else setEnv "PORT" (show fromProxyPort)
 
+  iStrLst <- newIORef [] :: IO (IORef [String])
+
   -- We call the build function only the first time we want to build our application.
   build
     buildFile -- The target file, should contain the function we wish to call.
@@ -60,3 +64,4 @@ buildAndRun buildFile runFunction watchDirectories isReverseProxy = do
     (fromProxyPort, toProxyPort) -- The port we reverse proxy to and from.
     Nothing -- Maybe IdeSession
     False  -- To rebuild or not to.
+    iStrLst

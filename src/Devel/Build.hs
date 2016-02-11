@@ -6,6 +6,9 @@ License     : MIT
 Maintainer  : njagi@urbanslug.com
 Stability   : experimental
 Portability : POSIX
+
+Does the actual building of your code.
+Most of the work wai-devel does is coordinated from here.
 -}
 
 {-# LANGUAGE OverloadedStrings #-}
@@ -33,17 +36,18 @@ import Devel.Compile
 import Devel.ReverseProxy (startReverseProxy)
 import Devel.Watch
 
+import Data.IORef
 
 -- | Compiles and calls run on your WAI application.
-build :: FilePath -> String ->  [String] -> Bool -> SessionConfig -> (Int, Int) -> Maybe IdeSession -> Bool -> IO ()
-build buildFile runFunction watchDirectories isReverseProxy sessionConfig (fromProxyPort, toProxyPort) mSession isRebuild = do
+build :: FilePath -> String ->  [String] -> Bool -> SessionConfig -> (Int, Int) -> Maybe IdeSession -> Bool -> IORef [String] -> IO ()
+build buildFile runFunction watchDirectories isReverseProxy sessionConfig (fromProxyPort, toProxyPort) mSession isRebuild iStrLst = do
 
   (initialSession, extensionList, includeTargets, additionalWatch) <- initCompile watchDirectories sessionConfig mSession
 
   -- Do this if isRebuild is False.
   unless isRebuild $
     if isReverseProxy then
-      do _ <- forkIO $ startReverseProxy (fromProxyPort, toProxyPort)
+      do _ <- forkIO $ startReverseProxy (fromProxyPort, toProxyPort) iStrLst
          putStrLn $ "Starting devel application at http://localhost:" ++
                     show fromProxyPort
     else
@@ -56,7 +60,12 @@ build buildFile runFunction watchDirectories isReverseProxy sessionConfig (fromP
        then return (initialSession, mempty)
        else compile initialSession buildFile extensionList includeTargets
 
-  eitherSession <- finishCompile (updatedSession, update)
+  eitherSession <- finishCompile (updatedSession, update) iStrLst
+
+  let -- clearLog :: IORef [String] -> IO ()
+      clearLog = do
+        log' <- readIORef iStrLst
+        writeIORef iStrLst ([] :: [String])
 
   case eitherSession of
     Left _ -> do
@@ -71,9 +80,11 @@ build buildFile runFunction watchDirectories isReverseProxy sessionConfig (fromP
       -- Stop the current app.
       putStrLn "\n\nRebuilding...\n\n"
       _ <- shutdownSession updatedSession
-      -- Coming to fix.
-      build buildFile runFunction watchDirectories False sessionConfig (fromProxyPort, toProxyPort) Nothing False
 
+      _ <- clearLog
+      
+      -- Coming to fix.
+      build buildFile runFunction watchDirectories False sessionConfig (fromProxyPort, toProxyPort) Nothing False iStrLst
     Right session -> do
       -- run the session
       (runActionsRunResult, threadId) <- run session buildFile runFunction
@@ -89,10 +100,14 @@ build buildFile runFunction watchDirectories isReverseProxy sessionConfig (fromP
 
       killThread watchId
 
+      _ <- clearLog 
+
       -- Stop the current app.
       _ <- stopApp runActionsRunResult threadId
       putStrLn "\n\nRebuilding...\n\n"
-      build buildFile runFunction watchDirectories isReverseProxy sessionConfig (fromProxyPort, toProxyPort) (Just session) True
+      build buildFile runFunction watchDirectories isReverseProxy sessionConfig (fromProxyPort, toProxyPort) (Just session) True iStrLst
+
+    
 
 
 run :: IdeSession -> FilePath -> String -> IO (RunActions RunResult, ThreadId)

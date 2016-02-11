@@ -1,0 +1,74 @@
+$doctype 5
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <title>Building wai-devel
+    <style>
+      body {
+        background: #e6e6e6;
+        color: #444;
+        text-shadow: 1px 1px 1px #ffffff;
+        font-size: 30px;
+        font-family: georgia, serif;
+      }
+      .wrap {
+        margin: auto;
+        width: 75%;
+      }
+      #build-log {
+        background: white;
+        color: black;
+        margin: auto;
+        width: 80%;
+        font-size: 16px;
+      }
+      #build-log, ul {
+        list-style: none;
+      }
+      h1 {
+        margin-bottom: 0;
+      }
+      h2 {
+        margin-top: 0;
+        font-size: medium;
+        font-style: italic;
+        color: #546369;
+      }
+      header {
+        padding-bottom: 0.25em;
+        border-bottom: 1px solid #ccc;
+        color: #1a6e8e;
+      }
+      header, #header{
+        font-size: smaller;
+      }
+      footer {
+        color: black;
+        text-align: center;
+        width: 70%;
+        position: absolute;
+        border-top: 1px solid #ccc;
+        padding: 12px 0px 12px 0px;
+        bottom:0;
+        z-index: 1;
+        font-size: small;
+      }
+      #sc {
+        font-size: small;
+      }    
+  <body>
+    <div class="wrap">
+      <header>
+         <small>wai-devel
+      <h2>We’re building your application.
+
+      <div id="sc">
+        <script>
+          document.write(new Date())
+
+      <div id="build-log">
+        <ul id="build-log-ul">
+          $forall log <- lstt
+            <li>#{log}
+
+      <footer>Made in Nairobi with love ❤.

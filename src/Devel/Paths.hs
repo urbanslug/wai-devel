@@ -69,6 +69,7 @@ getRecursiveContents topdir = do
   -- We want to take these files out.
   let patterns :: [Pattern]
       patterns = [ (compile "*.*~")
+                 , (compile ".#*")
                  , (compile "*.hi")
                  , (compile "*.dump-hi")
                  , (compile "*.o")

@@ -8,7 +8,7 @@ Stability   : experimental
 Portability : POSIX
 
 Actually checks only for modified files.
-Added or removed files don't trigger new builds.
+Added or removed files don't trigger rebuilds.
 -}
 {-# LANGUAGE OverloadedStrings, CPP #-}
 module Devel.Watch where

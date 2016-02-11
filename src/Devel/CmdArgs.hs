@@ -6,6 +6,8 @@ License     : MIT
 Maintainer  : njagi@urbanslug.com
 Stability   : experimental
 Portability : POSIX
+
+We handle command line arguments for yesod devel here.
 -}
 module Devel.CmdArgs
 (  cmdArgs
@@ -15,8 +17,8 @@ module Devel.CmdArgs
 import           Data.List.Split     (splitOn)
 import           Options.Applicative
 
--- | Command line arguments for yesod devel.
--- All arguments are optional.
+
+-- | All arguments are optional.
 data CmdArgs = CmdArgs
   { buildFile        :: FilePath
   , runFunction      :: String

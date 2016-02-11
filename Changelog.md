@@ -16,3 +16,9 @@
 ### 21 Dec 2015
 - Change license to MIT to better go with other WAI projects.
 - Added --version or -v to print wai-devel version.
+
+
+### 11 Feb 2016
+- Build progress in the browser
+- Pushed the resolver up to lts-5.2
+- Fixed haddocks

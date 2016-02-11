@@ -4,6 +4,7 @@ import Test.Hspec
 import Control.Concurrent
 import Devel.ReverseProxy
 
+import Data.IORef
 
 main :: IO ()
 main = hspec spec
@@ -12,7 +13,8 @@ spec :: Spec
 spec = do
   describe "Reverse proxing" $ 
     it "Starts a reverse proxy server from 3000 to 3001" $ do
-      tId <- forkIO $ startReverseProxy (3000, 3001)
+      iStrLst <- newIORef [] :: IO (IORef [String])
+      tId <- forkIO $ startReverseProxy (3000, 3001) iStrLst
       threadDelay 100
       killThread tId
       tId `shouldBe` tId
