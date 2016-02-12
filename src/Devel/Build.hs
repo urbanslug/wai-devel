@@ -64,7 +64,7 @@ build buildFile runFunction watchDirectories isReverseProxy sessionConfig (fromP
 
   let -- clearLog :: IORef [String] -> IO ()
       clearLog = do
-        log' <- readIORef iStrLst
+        _ <- readIORef iStrLst
         writeIORef iStrLst ([] :: [String])
 
   case eitherSession of

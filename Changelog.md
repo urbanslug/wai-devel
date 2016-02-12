@@ -22,3 +22,8 @@
 - Build progress in the browser
 - Pushed the resolver up to lts-5.2
 - Fixed haddocks
+- Fixed issue #16
+
+### 12 Feb 2016
+- Version bump 0.0.0.3
+- Fixed issue #21

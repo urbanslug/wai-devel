@@ -1,5 +1,5 @@
 name:                wai-devel
-version:             0.0.0.2
+version:             0.0.0.3
 synopsis:            A web server for the development of WAI compliant web applications.
 description:         A development server for WAI applications.
 homepage:            https://github.com/urbanslug/wai-devel
@@ -26,11 +26,11 @@ library
                      , Devel.Compile
                      , Devel.Types
                      , Devel.Build
-                     -- Cabal generated modules.
---                     , Paths_wai_devel
+
   other-modules:       Devel.Paths
                      , Devel.Modules
                      -- Cabal generated modules.
+                     -- Note to self: If errors, move to exposed modules.
                      , Paths_wai_devel
 
   -- other-extensions:
