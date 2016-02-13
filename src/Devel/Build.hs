@@ -39,8 +39,25 @@ import Devel.Watch
 import Data.IORef
 
 -- | Compiles and calls run on your WAI application.
-build :: FilePath -> String ->  [String] -> Bool -> SessionConfig -> (Int, Int) -> Maybe IdeSession -> Bool -> IORef [String] -> IO ()
-build buildFile runFunction watchDirectories isReverseProxy sessionConfig (fromProxyPort, toProxyPort) mSession isRebuild iStrLst = do
+build :: FilePath 
+      -> String 
+      ->  [String] 
+      -> Bool 
+      -> SessionConfig 
+      -> (Int, Int) 
+      -> Maybe IdeSession 
+      -> Bool 
+      -> IORef [String] 
+      -> IO ()
+build buildFile 
+      runFunction 
+      watchDirectories 
+      isReverseProxy 
+      sessionConfig 
+      (fromProxyPort, toProxyPort) 
+      mSession 
+      isRebuild 
+      iStrLst = do
 
   (initialSession, extensionList, includeTargets, additionalWatch) <- initCompile watchDirectories sessionConfig mSession
 
