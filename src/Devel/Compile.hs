@@ -89,7 +89,11 @@ getSourceList srcDir cabalSrcList = do
       sourceList = nub $ delete "app/DevelMain.hs" $ delete "app/devel.hs" sourceList'
 
   -- Drop leading "./" in filepaths with `map (\x -> x \\ "./") sourceList`
-  return $ map (\x -> x \\ "./") sourceList -- sourceList
+  return $ map removeLeadingDotSlash sourceList -- sourceList
+    where
+        removeLeadingDotSlash ('.':'/':xs) = xs
+        removeLeadingDotSlash xs = xs
+
 
 
 -- | Determining the target files and creating the session update.
