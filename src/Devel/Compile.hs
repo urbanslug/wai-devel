@@ -44,7 +44,7 @@ import Devel.Types
 
 import System.FilePath.Posix (takeExtension, pathSeparator)
 import System.Directory (doesFileExist)
-import Data.List (union, delete, isInfixOf, nub)
+import Data.List (union, delete, isInfixOf, nub, (\\))
 import Data.Maybe (fromMaybe)
 import Control.Monad (filterM)
 
@@ -88,12 +88,8 @@ getSourceList srcDir cabalSrcList = do
       -- nub to remove duplicates yet again.
       sourceList = nub $ delete "app/DevelMain.hs" $ delete "app/devel.hs" sourceList'
 
-  -- Drop leading "./" in filepaths
-  return $ map removeLeadingDotSlash sourceList
-    where
-        removeLeadingDotSlash ('.':'/':xs) = xs
-        removeLeadingDotSlash xs = xs
-
+  -- Drop leading "./" in filepaths with `map (\x -> x \\ "./") sourceList`
+  return $ map (\x -> x \\ "./") sourceList -- sourceList
 
 
 -- | Determining the target files and creating the session update.
