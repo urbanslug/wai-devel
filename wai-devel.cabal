@@ -1,5 +1,5 @@
 name:                wai-devel
-version:             0.0.0.3
+version:             0.0.0.4
 synopsis:            A web server for the development of WAI compliant web applications.
 description:         A development server for WAI applications.
 homepage:            https://github.com/urbanslug/wai-devel
