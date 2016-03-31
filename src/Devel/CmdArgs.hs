@@ -23,8 +23,8 @@ data CmdArgs = CmdArgs
   { buildFile        :: FilePath
   , runFunction      :: String
   , watchDirectories :: [String]
-  , versionNumber    :: Bool -- By default this should be False.
-  , isReverseProxy   :: Bool -- By default reverse proxy should be True
+  , versionNumber    :: Bool -- Default: False
+  , isReverseProxy   :: Bool -- Default: True
   } deriving (Show, Eq)
 
 cmdArgs :: Parser CmdArgs
@@ -46,7 +46,7 @@ cmdArgs = CmdArgs
                                   <> short 'w'
                                   <> value []
                                   <> metavar "DIRECTORY-LIST"
-                                  <> help "A comma-separated list of directories to watch for any changes (not just .hs files)."))
+                                  <> help "A comma-separated list of directories which have files we want to watch for changes in"))
         <*> flag False True
               (long "version"
                 <> short 'v'

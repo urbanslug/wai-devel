@@ -5,8 +5,7 @@ $doctype 5
     <title>Building wai-devel
     <style>
       body {
-        background: #e6e6e6;
-        color: #444;
+        background: #ffffff;
         text-shadow: 1px 1px 1px #ffffff;
         font-size: 30px;
         font-family: georgia, serif;
@@ -16,8 +15,7 @@ $doctype 5
         width: 75%;
       }
       #build-log {
-        background: white;
-        color: black;
+        color: #000;
         margin: auto;
         width: 80%;
         font-size: 16px;
@@ -27,12 +25,16 @@ $doctype 5
       }
       h1 {
         margin-bottom: 0;
+        color: #444;
       }
       h2 {
         margin-top: 0;
         font-size: medium;
         font-style: italic;
-        color: #546369;
+        color: #555;
+      }
+      h5 {
+        color: #555;
       }
       header {
         padding-bottom: 0.25em;
@@ -55,19 +57,21 @@ $doctype 5
       }
       #sc {
         font-size: small;
-      }    
+      }
   <body>
     <div class="wrap">
       <header>
          <small>wai-devel
-      <h2>We’re building your application.
+      <h2>We will keep refreshing this page every second.
 
       <div id="sc">
         <script>
           document.write(new Date())
 
       <div id="build-log">
+
         <ul id="build-log-ul">
+          <li><h5>Build log.
           $forall log <- lstt
             <li>#{log}
 

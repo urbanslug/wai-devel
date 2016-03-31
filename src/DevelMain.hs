@@ -13,7 +13,6 @@ import Devel
 import Devel.CmdArgs
 import Options.Applicative
 
-
 import Paths_wai_devel (version)
 import Data.Version (showVersion)
 
