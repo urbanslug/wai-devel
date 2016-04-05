@@ -2,6 +2,8 @@
 
 [![Join the chat at https://gitter.im/urbanslug/wai-devel](https://badges.gitter.im/urbanslug/wai-devel.svg)](https://gitter.im/urbanslug/wai-devel?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Build Status](https://travis-ci.org/urbanslug/wai-devel.svg?branch=master)](https://travis-ci.org/urbanslug/wai-devel)
+[![Hackage](https://img.shields.io/hackage/v/wai-devel.svg)](https://hackage.haskell.org/package/wai-devel)
+[![GitHub license](https://img.shields.io/github/license/mashape/apistatus.svg)]()
 
 Development server for [WAI] compliant haskell web applications.
 
